@@ -1,2 +1,2 @@
-# MOSAIC_methods_comparison
-scripts and figures comparing eDNA sampling methods for rare taxa
+# GitHub_MOSAIC_methods_paper
+scripts associated with MOSAIC eDNA sampling methods comparison paper
