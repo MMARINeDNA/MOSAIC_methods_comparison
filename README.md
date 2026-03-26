@@ -49,7 +49,7 @@ The model is fully Bayesian: rather than producing single point estimates, it pr
 
 ### Statistical model
 
-We modelled eDNA detections of six focal marine families -5 marine mammals, and one family of sharks (*Delphinidae*, *Phocoenidae*, *Balaenopteridae*, *Otariidae*, *Phocidae*, and *Alopiidae) using a two-level hierarchical Bayesian occupancy model implemented in NIMBLE (de Valpine et al. 2017). The model simultaneously estimates the probability that eDNA from a given family was present and captured on a given filter (the *presence/capture* submodel) and the probability that a single PCR technical replicate detected that eDNA given it was captured (the *detection* submodel). Separating these two processes is necessary because a zero count of positive replicates can arise either from the absence of eDNA in the sample or from PCR failure despite its presence.
+We modelled eDNA detections of six focal marine families -5 marine mammals, and one shark family (*Delphinidae*, *Phocoenidae*, *Balaenopteridae*, *Otariidae*, *Phocidae*, and *Alopiidae*) using a two-level hierarchical Bayesian occupancy model implemented in NIMBLE (de Valpine et al. 2017). The model simultaneously estimates the probability that eDNA from a given family was present and captured on a given filter (the *presence/capture* submodel) and the probability that a single PCR technical replicate detected that eDNA given it was captured (the *detection* submodel). Separating these two processes is necessary because a zero count of positive replicates can arise either from the absence of eDNA in the sample or from PCR failure despite its presence.
 
 #### Observation model
 
