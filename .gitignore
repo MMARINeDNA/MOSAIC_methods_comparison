@@ -1,2 +1,2 @@
-outputs/*
-viz/*
+outputs/*.RData
+viz/*.pdf
