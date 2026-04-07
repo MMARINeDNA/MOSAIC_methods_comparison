@@ -79,8 +79,6 @@ cat(sprintf("  Corrected implied speed       : %.1f kts (> 14.8 kt limit; will b
 drop_no_coords <- c("C47","C76","C77","C18","C19","C27","C33","C35","C36","F010")
 
 # --- 3b. NA required covariates (dist_km or Volume.filtered) ---
-# F062 was previously in this list solely for missing filtration_time_min,
-# which is no longer a model covariate; F062 is retained.
 drop_na_covars <- c("Fall13", "Fall17", "Fall65", "F076")
 
 # --- 3c. Physically impossible dist_km ---
@@ -93,9 +91,8 @@ drop_na_covars <- c("Fall13", "Fall17", "Fall65", "F076")
 # F021 is included here; even after correcting filtration_time_min (step 2)
 # the implied speed remains ~23.6 kts.
 # Speed filter applies to MOSAIC-A and MOSAIC-B only.
-# MOSAIC-C uses a carboy system towed alongside the ship; its end coordinates
-# reflect the carboy retrieval position rather than the ship's transit end,
-# so the dist_km calculation is not directly comparable to ship speed.
+# MOSAIC-C uses a carboy system to collect water for homogenization then a quick 5L filtration,
+# so the dist_km/time filtered calculation is not directly comparable to ship speed.
 # MOSAIC-C samples F008, F024, F044, F082, F095 are therefore retained.
 drop_impossible_dist <- c(
   # RS2311 (9 samples, MOSAIC-A): implied speed 16.5 – 293.8 kts

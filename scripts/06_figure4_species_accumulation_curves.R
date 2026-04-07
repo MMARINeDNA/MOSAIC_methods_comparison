@@ -113,7 +113,7 @@ accum_continuous <- function(pa_matrix, effort, n_perms = 200, n_bins = 50, cap 
 
 # ---- 5. Caps and curve computation ------------------------------------------
 
-non_A <- c("MOSAIC-B", "MOSAIC-C", "MOSAIC-D")
+non_A <- c("MOSAIC-B", "MOSAIC-C", "CTD")
 
 cap_pcr <- pa_df %>%
   filter(Collection.method %in% non_A) %>%
@@ -217,10 +217,10 @@ METHOD_COLORS <- c(
 )
 
 PANEL_META <- list(
-  pcr = list(label = "Number of PCR replicates",        title = "(a) Per PCR Replicate"),
-  vol = list(label = "Cumulative volume filtered (L)",   title = "(b) Per Liter Filtered"),
-  min = list(label = "Cumulative filtration time (min)", title = "(c) Per Minute Filtered"),
-  km  = list(label = "Cumulative survey distance (km)",  title = "(d) Per Kilometer")
+  pcr = list(label = "Number of PCR replicates",        title = "(A) Per PCR Replicate"),
+  vol = list(label = "Cumulative volume filtered (L)",   title = "(B) Per Liter Filtered"),
+  min = list(label = "Cumulative filtration time (min)", title = "(C) Per Minute Filtered"),
+  km  = list(label = "Cumulative survey distance (km)",  title = "(D) Per Kilometer")
 )
 
 make_panel <- function(data, panel_key, show_y = TRUE) {
@@ -288,7 +288,25 @@ make_figure <- function(curves, subtitle) {
                                  override.aes = list(shape = 22, size = 4, stroke = 0)))
 }
 
-# ---- 7. Save ----------------------------------------------------------------
+# ---- 7. Journal figure (panels a+b only, white background, no title) -------
+
+make_figure_journal <- function(curves) {
+  p_pcr <- make_panel(curves, "pcr", show_y = TRUE) +
+    theme(plot.background = element_rect(fill = "white", colour = NA))
+  p_vol <- make_panel(curves, "vol", show_y = FALSE) +
+    theme(plot.background = element_rect(fill = "white", colour = NA))
+
+  (p_pcr | p_vol) +
+    plot_layout(guides = "collect") &
+    theme(
+      legend.position  = "bottom",
+      plot.background  = element_rect(fill = "white", colour = NA)
+    ) &
+    guides(colour = guide_legend(nrow = 1,
+                                 override.aes = list(shape = 22, size = 4, stroke = 0)))
+}
+
+# ---- 8. Save ----------------------------------------------------------------
 
 subtitle_trimmed <- paste0(
   "Mean \u00b1 1 SD \u00b7 ", N_PERMS, " permutations \u00b7 Vertebrata only \u00b7 ",
@@ -308,4 +326,9 @@ ggsave("viz/species_accumulation_curves_full.pdf", fig_unsampled,
        width = 9, height = 8.5, units = "in", device = cairo_pdf)
 
 cat("Saved species_accumulation_curves_zoomed.pdf and species_accumulation_curves_full.pdf\n")
+
+fig_journal <- make_figure_journal(curves_trimmed)
+ggsave("viz/species_accumulation_curves_journal.pdf", fig_journal,
+       width = 9, height = 4.25, units = "in", device = cairo_pdf)
+cat("Saved species_accumulation_curves_journal.pdf\n")
 
