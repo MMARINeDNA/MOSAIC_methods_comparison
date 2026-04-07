@@ -1,2 +1,2 @@
-# GitHub_MOSAIC_methods_paper
-scripts associated with MOSAIC eDNA sampling methods comparison paper
+# MOSAIC_methods_comparison
+protocols and data scripts associated with MOSAIC eDNA sampling methods comparison paper

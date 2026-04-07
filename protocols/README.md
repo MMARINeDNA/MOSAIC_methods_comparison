@@ -1,0 +1,1 @@
+The protocols here describe in detail the MOSAIC underway sampling method, PCI DNA extraction method, and MarVer1 PCR protocols employed in Fall 2023 and Summer 2024 to generate the data in this manuscript
