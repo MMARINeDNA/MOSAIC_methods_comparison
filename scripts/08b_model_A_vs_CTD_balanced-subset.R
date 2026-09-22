@@ -1,33 +1,57 @@
 # =============================================================================
-# MOSAIC Marine Mammals — Multi-Taxon Two-Level Occupancy Model (Hierarchical)
-# Version 3
-# =============================================================================
+# MOSAIC Marine Mammals — v6 MATCHED SENSITIVITY (Q1): A-vs-D balance check.
+#   Uses every MOSAIC-A (86) and every CTD/MOSAIC-D (26) from both cruises, with a
+#   fixed Fall-vs-Summer cruise term, and relies on the hierarchical model (site RE +
+#   inshore/offshore) to absorb the uneven A-vs-D sampling effort. NO data excluded
+#   (Summer CTD hotspot F101/F102 included -> conservative). Machinery otherwise
+#   identical to the v5 Stage-1 script (decision 3). See outputs/v6/PLAN_v6_stage1.md.
+#   The RS2311 "MOSAIC Pilot" cruise tested surface horizontal integration
+#   (MOSAIC-A underway transect) against deep vertical integration (MOSAIC-D CTD
+#   cast). This model formalizes that comparison: RS2311 ONLY, methods A and D
+#   ONLY (B and C were introduced in Summer and belong to the Stage 2 "why"
+#   model). It asks one question — does the surface strategy capture more
+#   marine-mammal eDNA than the CTD strategy?
 #
-# Changes from v1 (phyloseq RDS input, d_AB shared, dnorm(0.5) inshore prior):
-#   (1) Input: loads from three flat CSVs rather than a phyloseq RDS.
-#   (2) mu_b_inshore prior: dnorm(0, sd=1) — neutral inshore/offshore expectation.
-#   (3) MOSAIC-A and MOSAIC-B remain merged as a single shared contrast d_AB,
-#       consistent with both being direct in-line filtration methods.
+#   d_method is the A-vs-D contrast (D = reference). A fixed cruise term (Summer
+#   reference) IS included; NO volume/distance covariates: A and D differ in volume, depth
+#   and transect length as a PACKAGE, and Stage 1 deliberately measures the
+#   strategy as deployed rather than decomposing it (that is Stage 2's job).
+#   Writes to outputs/..._stage1_AvsD_results.RData and
+#   outputs/v6/figures/stage1_v6_matched/.
+# =============================================================================
 #
 # Two levels:
 #   Level 1 — Presence/capture (phi[i, f]):
 #     logit(phi[i, f]) = alpha[f]
-#                      + d_cruise    * cruise2[i]
+#                      + site_term[i]                  <- concurrent-site RE
 #                      + b_inshore[f] * inshore[i]
-#                      + d_AB        * method_AB[i]
-#                      + d_C         * method_C[i]
-#                      + d_vol       * vol_sc[i]
-#                      + d_dist      * dist_sc[i]
+#                      + d_method    * is_A[i]         <- A vs D (D reference)
 #     alpha[f] and b_inshore[f] are taxon-level random effects (NCP).
-#     d_cruise, d_AB, d_C, d_vol, d_dist are shared across taxa.
+#     d_method is shared across taxa.
+#
+#   Concurrent-site random intercept (site_term[i]):
+#     Guards against pseudo-replication. Filters whose sampling time-windows
+#     overlap sample the same water and form one "site". In RS2311 the A
+#     transects launch from the D CTD stations, so grouping A and D at a shared
+#     station makes d_method a largely WITHIN-STATION paired A-vs-D contrast.
+#     Built (per cruise) as: temporal-overlap components -> non-bridging CTD
+#     anchoring (a CTD within STATION_RADIUS_KM of a transect end/start joins
+#     that transect's site) -> coordinate fallback. Non-centered, zero-mean RE:
+#       s_site[j]    <- sigma_site * z_site[j],  z_site[j] ~ N(0, 1)
+#       site_term[i] <- s_site[site_idx[i]]
 #
 #   Level 2 — Detection per tech rep (p[i]):
-#     logit(p[i]) = delta + d_time * time_sc[i]
-#     Shared across all taxa.
+#     logit(p[i]) = delta        (intercept only)
+#     Shared across all taxa. Filtration time is intentionally excluded here:
+#     in the A-vs-D pilot filtration duration is confounded with method
+#     (A median 98 min vs D 29 min; r(method, time) = 0.71) just as volume is,
+#     so a time coefficient would partly re-encode the A/D contrast. Clogging
+#     dynamics are characterised separately as supporting evidence, not in the
+#     occupancy model (project convention).
 #
 # Reference levels:
-#   Method:  MOSAIC-D (CTD bottle cast) — method_AB = method_C = 0
-#   Cruise:  RS2311 (cruise2 = 0); SR2408 = 1
+#   Method:  MOSAIC-D (CTD cast) is the reference; is_A = 1 for MOSAIC-A.
+#   Cruise: SR2408 (Summer) is the reference; is_fall = 1 for RS2311 (Fall).
 #
 # NIMBLE structure (avoids NIMBLE 1.4.1 posterior_predictive bug):
 #   z[i, f]     ~ dbern(phi[i, f])
@@ -58,10 +82,21 @@ cat("Sample metadata: ", nrow(md),  "rows x", ncol(md),  "cols\n")
 cat("Taxa table:      ", nrow(tax), "rows x", ncol(tax), "cols\n")
 cat("OTU table:       ", nrow(otu), "rows x", ncol(otu), "cols (taxa x samples)\n\n")
 
+# v6 MATCHED SENSITIVITY: the 52-filter balance check (26 CTD + 26 zone-matched A),
+# from 08.4_build_matched_pairs_v6.R. Same model as the v6 primary; tests whether
+# cutting A to a cruise x inshore/offshore-balanced 26 moves d_method.
+mp_v6 <- read.csv("outputs/v6/matched_pairs_v6.csv", stringsAsFactors = FALSE)
+keep_filters <- unique(c(mp_v6$CTD, mp_v6$A))
+md  <- md[md$Collection.method %in% c("MOSAIC-A", "MOSAIC-D") &
+          md$FilterID %in% keep_filters, , drop = FALSE]
+otu <- otu[, rownames(md), drop = FALSE]
+cat(sprintf("v6 matched subset: %d A/D tech-rep rows across %d filters (cruises: %s)\n\n",
+            nrow(md), length(unique(md$FilterID)),
+            paste(sort(unique(md$Cruise)), collapse = ", ")))
+
 stopifnot(all(colnames(otu) %in% rownames(md)))
 stopifnot(all(rownames(otu) %in% rownames(tax)))
-
-otu <- otu[, rownames(md), drop = FALSE]
+stopifnot(all(md$Collection.method %in% c("MOSAIC-A", "MOSAIC-D")))
 
 # =============================================================================
 # 2. DATA ALREADY FILTERED
@@ -71,7 +106,6 @@ otu <- otu[, rownames(md), drop = FALSE]
 
 stopifnot(all(!is.na(md$Volume.filtered..mL.)))
 stopifnot(all(!is.na(md$dist_km)))
-stopifnot(all(!is.na(md$filtration_time_min)))
 stopifnot(all(!is.na(md$Inshore.Offshore)))
 stopifnot(all(!is.na(md$Collection.method)))
 
@@ -197,46 +231,146 @@ filter_md <- md[match(filter_ids, md$FilterID), ]
 # --- Inshore/Offshore ---
 inshore_vec <- as.integer(filter_md$Inshore.Offshore == "Inshore")
 
-# --- Collection method indicators (reference = MOSAIC-D) ---
-# MOSAIC-A and MOSAIC-B are both direct in-line filtration and share d_AB.
-# MOSAIC-C (carboy) receives a separate contrast d_C.
-# MOSAIC-D (CTD cast): method_AB = method_C = 0 (reference).
+# --- Method indicator: A vs D (D = reference) ---
 method_vec <- filter_md$Collection.method
-method_AB  <- as.integer(method_vec %in% c("MOSAIC-A", "MOSAIC-B"))
-method_C   <- as.integer(method_vec == "MOSAIC-C")
+is_A_vec   <- as.integer(method_vec == "MOSAIC-A")
 
-cat("Filter counts by method (MOSAIC-D = reference):\n")
+cat("Filter counts by method (v6; MOSAIC-D = reference):\n")
 print(table(method_vec))
 cat("\n")
 
-# --- Continuous covariates (z-scored) ---
-scale2  <- function(x) (x - mean(x, na.rm = TRUE)) / sd(x, na.rm = TRUE)
-vol_sc  <- scale2(as.numeric(filter_md$Volume.filtered..mL.))
-dist_sc <- scale2(as.numeric(filter_md$dist_km))
-time_sc <- scale2(as.numeric(filter_md$filtration_time_min))
+# --- Cruise indicator: Fall vs Summer (SR2408 Summer = reference) ---
+is_fall_vec <- as.integer(filter_md$Cruise == "RS2311")
+cat("Filter counts by cruise x method (v6 primary):\n")
+print(table(filter_md$Cruise, method_vec))
+cat("\n")
+
+# --- Detection submodel is intercept-only in Stage 1 ---
+# No filtration-time / volume / distance covariates: all three are confounded
+# with the A-vs-D method contrast in the RS2311 pilot (see header note).
+
+cruise_labels <- sort(unique(filter_md$Cruise))   # both cruises in v6 primary
 
 # =============================================================================
-# 5b. CRUISE COVARIATE (fixed-effect binary contrast)
+# 5c. SITE GROUPING — temporal concurrency (per cruise), coordinate fallback
 # =============================================================================
-# With only two cruises a random effect is unidentifiable. d_cruise is the
-# log-odds difference between SR2408 (cruise2=1) and RS2311 (reference, =0).
+# The MOSAIC methods draw from one vessel's underway supply per cruise, so
+# filters whose sampling time-windows OVERLAP are pumping the same water mass
+# and belong to one "site" (concurrent sampling occasion). This — not a shared
+# start coordinate — is the co-location signal that matters: each parallel
+# MOSAIC-B chain runs concurrently with its long parent MOSAIC-A transect (every
+# B-chain in this data overlaps an A for 39-229 min), and this holds even when
+# their START coordinates differ by 20+ km because the A began its long run
+# upstream. Sites are built PER CRUISE (a location is not the same biodiversity
+# across seasons) in three passes:
+#   (a) temporal-interval overlap (concurrent sampling) -> connected components;
+#   (b) CTD anchoring (NON-BRIDGING) — each temporal-singleton CTD joins the
+#       site of its SINGLE nearest transect whose START or END is within
+#       STATION_RADIUS_KM of the CTD point. The CTD adopts one transect's site;
+#       it never merges two transects together;
+#   (c) coordinate fallback — any filter still without a partner is clustered by
+#       START coordinate within STATION_RADIUS_KM (per cruise).
+# Single membership: each filter belongs to exactly one site.
 
-cruise_labels <- sort(unique(filter_md$Cruise))
-n_cruises     <- length(cruise_labels)
+STATION_RADIUS_KM <- 5   # CTD-anchor + coordinate-fallback radius (km)
 
-if (n_cruises != 2) {
-  warning(sprintf(
-    "%d cruises found; script expects exactly 2 for a binary fixed effect.",
-    n_cruises))
+haversine_km <- function(lat1, lon1, lat2, lon2) {
+  R <- 6371; p <- pi / 180
+  a <- sin((lat2 - lat1) * p / 2)^2 +
+       cos(lat1 * p) * cos(lat2 * p) * sin((lon2 - lon1) * p / 2)^2
+  2 * R * asin(pmin(1, sqrt(a)))
 }
 
-cruise2_vec <- as.integer(filter_md$Cruise == cruise_labels[2])
+t0_sec <- as.numeric(as.POSIXct(filter_md$datetime_start, tz = "UTC"))
+t1_sec <- as.numeric(as.POSIXct(filter_md$datetime_end,   tz = "UTC"))
+stopifnot(all(!is.na(t0_sec)), all(!is.na(t1_sec)), all(t1_sec >= t0_sec))
+stopifnot(all(!is.na(filter_md$Latitude.start)), all(!is.na(filter_md$Longitude.start)))
 
-cat(sprintf("Cruise reference: '%s' (= 0)  |  Contrast: '%s' (= 1)\n",
-            cruise_labels[1], cruise_labels[2]))
-cat(sprintf("Filters: %s = %d, %s = %d\n\n",
-            cruise_labels[1], sum(cruise2_vec == 0),
-            cruise_labels[2], sum(cruise2_vec == 1)))
+n_f <- nrow(filter_md)
+
+is_ctd  <- filter_md$Collection.method == "MOSAIC-D"
+is_tran <- filter_md$Collection.method %in% c("MOSAIC-A", "MOSAIC-B", "MOSAIC-C")
+
+# --- 1) Adjacency (same cruise): temporal concurrency only ---
+# Overlapping sampling intervals = same pumped water. CTD spatial anchoring is
+# applied in step 2b as a NON-BRIDGING attribution (not a graph edge), so a CTD
+# can never merge two otherwise-separate transects together.
+adj <- matrix(FALSE, n_f, n_f)
+for (i in 1:(n_f - 1)) for (j in (i + 1):n_f) {
+  if (filter_md$Cruise[i] == filter_md$Cruise[j] &&
+      min(t1_sec[i], t1_sec[j]) > max(t0_sec[i], t0_sec[j])) {
+    adj[i, j] <- adj[j, i] <- TRUE
+  }
+}
+
+# --- 2) Connected components = concurrent sampling occasions ---
+site <- integer(n_f); k <- 0L
+for (i in seq_len(n_f)) {
+  if (site[i] != 0) next
+  k <- k + 1L; stack <- i
+  while (length(stack)) {
+    v <- stack[1]; stack <- stack[-1]
+    if (site[v] == 0) { site[v] <- k; stack <- c(stack, which(adj[v, ] & site == 0)) }
+  }
+}
+n_temporal <- k
+
+# --- 2b) CTD anchoring (NON-BRIDGING) ---
+# Each CTD that is a temporal singleton is attributed to the site of its SINGLE
+# nearest transect whose START or END lies within STATION_RADIUS_KM of the CTD
+# point. The CTD adopts that one transect's existing site; no graph edge is
+# added, so two transects are never merged through a shared-station CTD. CTDs
+# already grouped by concurrency, or with no transect in range, are left as-is.
+comp_size0 <- table(site)
+for (i in which(is_ctd)) {
+  if (comp_size0[as.character(site[i])] > 1) next          # already concurrent
+  tr <- which(is_tran & filter_md$Cruise == filter_md$Cruise[i])
+  if (length(tr) == 0) next
+  d <- pmin(
+    haversine_km(filter_md$Latitude.start[i], filter_md$Longitude.start[i],
+                 filter_md$Latitude.start[tr], filter_md$Longitude.start[tr]),
+    haversine_km(filter_md$Latitude.start[i], filter_md$Longitude.start[i],
+                 filter_md$Latitude.end[tr],   filter_md$Longitude.end[tr]))
+  if (min(d) < STATION_RADIUS_KM) site[i] <- site[tr[which.min(d)]]
+}
+
+# --- 3) Coordinate fallback for remaining singletons ---
+# Filters still with no partner are clustered by START coordinate within each
+# cruise, so repeat / near-repeat visits still share a site.
+comp_size  <- table(site)
+singletons <- which(comp_size[as.character(site)] == 1)
+next_id    <- n_temporal
+for (cr in unique(filter_md$Cruise)) {
+  s <- singletons[filter_md$Cruise[singletons] == cr]
+  if (length(s) < 1) next
+  lab <- integer(length(s))
+  for (a in seq_along(s)) {
+    if (lab[a] != 0) next
+    next_id <- next_id + 1L; lab[a] <- next_id
+    d <- haversine_km(filter_md$Latitude.start[s[a]], filter_md$Longitude.start[s[a]],
+                      filter_md$Latitude.start[s],    filter_md$Longitude.start[s])
+    lab[d < STATION_RADIUS_KM & lab == 0] <- next_id
+  }
+  site[s] <- lab
+}
+
+# --- 4) Relabel sites to a contiguous 1..n_sites index ---
+site_idx <- as.integer(factor(site))
+n_sites  <- length(unique(site_idx))
+
+cat(sprintf("Site grouping: %d temporal components + non-bridging CTD anchoring + coordinate fallback -> %d sites for %d filters\n",
+            n_temporal, n_sites, n_f))
+site_sz <- table(site_idx)
+cat(sprintf("Sites: %d singletons | %d filters in multi-filter sites | largest site: %d filters\n",
+            sum(site_sz == 1), sum(site_sz[as.character(site_idx)] > 1), max(site_sz)))
+mt_chk <- table(site_idx, filter_md$Collection.method)
+uw_cols <- intersect(c("MOSAIC-A", "MOSAIC-B", "MOSAIC-C"), colnames(mt_chk))
+ctd_grouped <- if ("MOSAIC-D" %in% colnames(mt_chk))
+  sum(is_ctd & site_sz[as.character(site_idx)] > 1) else 0
+cat(sprintf("CTD casts grouped with >=1 other filter: %d of %d | Sites mixing >=2 methods: %d | CTD+underway sites: %d\n\n",
+            ctd_grouped, sum(is_ctd), sum(rowSums(mt_chk > 0) >= 2),
+            if ("MOSAIC-D" %in% colnames(mt_chk))
+              sum(mt_chk[, "MOSAIC-D"] > 0 & rowSums(mt_chk[, uw_cols, drop = FALSE]) > 0) else 0))
 
 # =============================================================================
 # 6. BUNDLE DATA AND CONSTANTS FOR NIMBLE
@@ -250,13 +384,12 @@ nimble_constants <- list(
   n_filters  = n_filters,
   n_families = n_families,
   n_reps     = n_reps_vec,
-  cruise2    = cruise2_vec,
   inshore    = inshore_vec,
-  method_AB  = method_AB,
-  method_C   = method_C,
-  vol_sc     = vol_sc,
-  dist_sc    = dist_sc,
-  time_sc    = time_sc
+  is_A       = is_A_vec,
+  is_fall    = is_fall_vec,
+  n_sites    = n_sites,
+  site_idx   = site_idx,
+  use_site   = 1          # 1 = site RE active; set 0 for the no-site WAIC refit
 )
 
 # =============================================================================
@@ -289,20 +422,28 @@ mammal_model_code <- nimbleCode({
   }
 
   # ---------------------------------------------------------------------------
-  # Shared priors — presence/capture submodel
+  # Site (concurrent-sampling-occasion) random intercept (NCP, zero-mean, shared)
   # ---------------------------------------------------------------------------
-  # Reference method: MOSAIC-D (CTD cast).
-  # d_AB: shared contrast for MOSAIC-A and MOSAIC-B (both direct in-line) vs D.
-  # d_C:  contrast for MOSAIC-C (carboy) vs D.
-  d_AB   ~ dnorm(0, sd = 1)
-  d_C    ~ dnorm(0, sd = 1)
-  d_vol  ~ dnorm(0, sd = 1)
-  d_dist ~ dnorm(0, sd = 1)
+  # Zero-mean: the grand level is absorbed by alpha[f], so only the site
+  # deviations are estimated. sigma_site governs how much genuine site-level
+  # heterogeneity the data support (weakly identified given many small sites —
+  # treat a small posterior as "little residual site structure").
+  sigma_site ~ dexp(1)
+  for (j in 1:n_sites) {
+    z_site[j] ~ dnorm(0, sd = 1)
+    s_site[j] <- sigma_site * z_site[j]
+  }
 
   # ---------------------------------------------------------------------------
-  # Cruise fixed effect — binary contrast
+  # Shared prior — presence/capture submodel
   # ---------------------------------------------------------------------------
-  d_cruise ~ dnorm(0, sd = 1)   # SR2408 vs RS2311 (reference)
+  # d_method: A-vs-D contrast (MOSAIC-D CTD = reference). The single Stage 1
+  # effect of interest — does the surface strategy capture more than the CTD.
+  d_method ~ dnorm(0, sd = 1)
+
+  # d_cruise: fixed Fall-vs-Summer contrast (SR2408 Summer = reference), as in the
+  # v5 Stage-2 model. Adjusts the A-vs-D contrast for between-cruise differences.
+  d_cruise ~ dnorm(0, sd = 1)
 
   # ---------------------------------------------------------------------------
   # Shared priors — detection submodel
@@ -310,28 +451,31 @@ mammal_model_code <- nimbleCode({
   # Prior centred at -1 (logit) -> p ~ 27% per rep at baseline.
   # Prevents the degenerate low-phi/high-p posterior corner.
   delta  ~ dnorm(-1, sd = 1)
-  d_time ~ dnorm(0,  sd = 1)
 
   # ---------------------------------------------------------------------------
   # Likelihood
   # ---------------------------------------------------------------------------
   for (i in 1:n_filters) {
 
-    # Per-rep detection probability — shared across taxa, varies by filter
-    logit_p[i] <- delta + d_time * time_sc[i]
+    # Per-rep detection probability — shared across taxa and filters (intercept)
+    logit_p[i] <- delta
     p[i]       <- ilogit(logit_p[i])
+
+    # Site effect: the filter's concurrent-sampling-occasion random intercept
+    # (single membership from the temporal-overlap components + coordinate
+    # fallback built in Section 5c). use_site toggles it off (0) for the
+    # no-site WAIC comparison without changing the model graph.
+    site_term[i] <- use_site * s_site[site_idx[i]]
 
     for (f in 1:n_families) {
 
       # Presence/capture probability
-      # Reference: MOSAIC-D, RS2311, Offshore
+      # Reference: MOSAIC-D (CTD), Offshore
       logit_phi[i, f] <- alpha[f]                    +
-                         d_cruise  * cruise2[i]       +
+                         site_term[i]                 +
                          b_inshore[f] * inshore[i]    +
-                         d_AB      * method_AB[i]     +
-                         d_C       * method_C[i]      +
-                         d_vol     * vol_sc[i]        +
-                         d_dist    * dist_sc[i]
+                         d_method  * is_A[i]          +
+                         d_cruise  * is_fall[i]
       phi[i, f] <- ilogit(logit_phi[i, f])
 
       # Latent presence/capture state
@@ -380,13 +524,11 @@ inits <- function() list(
   sigma_b_inshore = 0.5,
   z_alpha         = z_alpha_0,
   z_b_inshore     = rep(0, n_families),
-  d_AB            = 0,
-  d_C             = 0,
-  d_vol           = 0.5,
-  d_dist          = 0.5,
+  d_method        = 0.5,
   d_cruise        = 0,
   delta           = -1,
-  d_time          = -0.5,
+  sigma_site      = 0.5,
+  z_site          = rep(0, n_sites),
   z               = z_init_mat
 )
 
@@ -403,9 +545,12 @@ params_to_monitor <- c(
   # Derived taxon random effects (deterministic — for inference and plots)
   "alpha", "b_inshore",
   # Shared presence/capture coefficients
-  "d_cruise", "d_AB", "d_C", "d_vol", "d_dist",
-  # Shared detection coefficients
-  "delta", "d_time",
+  "d_method", "d_cruise",
+  # Site random-effect scale (site deviates s_site are a high-dimensional
+  # nuisance — only the scale is monitored for inference)
+  "sigma_site",
+  # Shared detection coefficient (intercept only)
+  "delta",
   # Filter-level latent probabilities
   "phi", "p"
   # Note: z (latent binary) is not monitored — high-dimensional nuisance
@@ -463,8 +608,9 @@ samples_combined <- do.call(rbind, lapply(samples, as.matrix))
 key_params <- c(
   "mu_alpha", "sigma_alpha",
   "mu_b_inshore", "sigma_b_inshore",
-  "d_cruise", "d_AB", "d_C", "d_vol", "d_dist",
-  "delta", "d_time",
+  "d_method", "d_cruise",
+  "sigma_site",
+  "delta",
   paste0("z_alpha[",     1:n_families, "]"),
   paste0("z_b_inshore[", 1:n_families, "]")
 )
@@ -507,16 +653,14 @@ summarize_param <- function(mat, params) {
 
 cat("\n--- Hyperparameters ---\n")
 print(summarize_param(samples_combined,
-      c("mu_alpha", "sigma_alpha", "mu_b_inshore", "sigma_b_inshore")))
+      c("mu_alpha", "sigma_alpha", "mu_b_inshore", "sigma_b_inshore",
+        "sigma_site")))
 
-cat(sprintf(
-  "\n--- Shared presence/capture covariates (method ref = MOSAIC-D | cruise ref = %s) ---\n",
-  cruise_labels[1]))
-print(summarize_param(samples_combined,
-      c("d_cruise", "d_AB", "d_C", "d_vol", "d_dist")))
+cat("\n--- A-vs-D contrast (d_method) + cruise (d_cruise; Summer = ref); all data ---\n")
+print(summarize_param(samples_combined, c("d_method", "d_cruise")))
 
-cat("\n--- Shared detection submodel ---\n")
-print(summarize_param(samples_combined, c("delta", "d_time")))
+cat("\n--- Shared detection submodel (intercept only) ---\n")
+print(summarize_param(samples_combined, c("delta")))
 
 cat("\n--- Taxon intercepts alpha[f] ---\n")
 summ_alpha <- summarize_param(samples_combined, paste0("alpha[", 1:n_families, "]"))
@@ -531,6 +675,9 @@ print(summ_binsh)
 # =============================================================================
 # 13. POSTERIOR PLOTS
 # =============================================================================
+
+# v4 trial: write plots to a dedicated subfolder so v3 plots are untouched.
+dir.create("outputs/v6/figures/stage1_v6_matched", recursive = TRUE, showWarnings = FALSE)
 
 label_family_params <- function(samp_list, base, n_fam, labels) {
   old_nms <- paste0(base, "[", 1:n_fam, "]")
@@ -551,12 +698,13 @@ samples_lab_combined <- do.call(rbind, lapply(samples_lab, as.matrix))
 
 alpha_lab    <- paste0("alpha[",     focal_families, "]")
 binsh_lab    <- paste0("b_inshore[", focal_families, "]")
-subtitle_ref <- sprintf("Method ref: MOSAIC-D  |  Cruise ref: %s", cruise_labels[1])
+subtitle_ref <- "v6 matched: A vs D  |  balanced 26v26  |  D = reference"
 
 # (a) Trace plots — scalar hyperparameters and shared coefficients
 scalar_params <- intersect(
   c("mu_alpha", "sigma_alpha", "mu_b_inshore", "sigma_b_inshore",
-    "d_cruise", "d_AB", "d_C", "d_vol", "d_dist", "delta", "d_time"),
+    "d_method", "d_cruise", "sigma_site",
+    "delta"),
   colnames(samples_lab[[1]])
 )
 
@@ -569,7 +717,7 @@ p_trace_scalar <- mcmc_trace(
        subtitle = subtitle_ref) +
   theme_bw()
 
-ggsave("viz/Bayesian_occupancy_modeling/plot_trace_scalar.pdf", p_trace_scalar, width = 10, height = 12, dpi = 150)
+ggsave("outputs/v6/figures/stage1_v6_matched/plot_trace_scalar.pdf", p_trace_scalar, width = 10, height = 12, dpi = 150)
 cat("Saved: plot_trace_scalar.pdf\n")
 
 # (b) Trace plots — NCP deviates
@@ -585,7 +733,7 @@ p_trace_re <- mcmc_trace(
   labs(title = "Trace plots — NCP deviates (z_alpha, z_b_inshore)") +
   theme_bw()
 
-ggsave("viz/Bayesian_occupancy_modeling/plot_trace_re.pdf", p_trace_re, width = 10, height = 10, dpi = 150)
+ggsave("outputs/v6/figures/stage1_v6_matched/plot_trace_re.pdf", p_trace_re, width = 10, height = 10, dpi = 150)
 cat("Saved: plot_trace_re.pdf\n")
 
 # (c) Interval plots — taxon intercepts
@@ -600,7 +748,7 @@ p_alpha_int <- mcmc_intervals(
        x = "log-odds", y = NULL) +
   theme_bw()
 
-ggsave("viz/Bayesian_occupancy_modeling/plot_alpha_intervals.pdf", p_alpha_int, width = 7, height = 4, dpi = 150)
+ggsave("outputs/v6/figures/stage1_v6_matched/plot_alpha_intervals.pdf", p_alpha_int, width = 7, height = 4, dpi = 150)
 cat("Saved: plot_alpha_intervals.pdf\n")
 
 # (d) Interval plots — taxon inshore offsets
@@ -615,13 +763,13 @@ p_binsh_int <- mcmc_intervals(
        x = "log-odds", y = NULL) +
   theme_bw()
 
-ggsave("viz/Bayesian_occupancy_modeling/plot_binshore_intervals.pdf", p_binsh_int, width = 7, height = 4, dpi = 150)
+ggsave("outputs/v6/figures/stage1_v6_matched/plot_binshore_intervals.pdf", p_binsh_int, width = 7, height = 4, dpi = 150)
 cat("Saved: plot_binshore_intervals.pdf\n")
 
 # (e) Posterior area plots — shared presence/capture coefficients
 p_phi_coef <- mcmc_areas(
   samples_lab_combined,
-  pars      = intersect(c("d_cruise", "d_AB", "d_C", "d_vol", "d_dist"),
+  pars      = intersect(c("d_method", "d_cruise"),
                         colnames(samples_lab_combined)),
   prob      = 0.95,
   point_est = "median"
@@ -632,22 +780,22 @@ p_phi_coef <- mcmc_areas(
        x        = "log-odds") +
   theme_bw()
 
-ggsave("viz/Bayesian_occupancy_modeling/plot_phi_coef_areas.pdf", p_phi_coef, width = 7, height = 4, dpi = 150)
+ggsave("outputs/v6/figures/stage1_v6_matched/plot_phi_coef_areas.pdf", p_phi_coef, width = 7, height = 4, dpi = 150)
 cat("Saved: plot_phi_coef_areas.pdf\n")
 
-# (f) Posterior area plots — shared detection coefficients
+# (f) Posterior area plot — shared detection intercept (intercept-only submodel)
 p_det_coef <- mcmc_areas(
   samples_lab_combined,
-  pars      = intersect(c("delta", "d_time"), colnames(samples_lab_combined)),
+  pars      = intersect(c("delta"), colnames(samples_lab_combined)),
   prob      = 0.95,
   point_est = "median"
 ) +
   geom_vline(xintercept = 0, linetype = "dashed", colour = "grey50") +
-  labs(title = "Shared detection coefficients  (logit scale)",
+  labs(title = "Shared detection intercept  (logit scale)",
        x     = "log-odds") +
   theme_bw()
 
-ggsave("viz/Bayesian_occupancy_modeling/plot_det_coef_areas.pdf", p_det_coef, width = 7, height = 3, dpi = 150)
+ggsave("outputs/v6/figures/stage1_v6_matched/plot_det_coef_areas.pdf", p_det_coef, width = 7, height = 3, dpi = 150)
 cat("Saved: plot_det_coef_areas.pdf\n")
 
 # (g) Combined interval plot — all parameters
@@ -668,7 +816,7 @@ p_all_int <- mcmc_intervals(
        x        = "posterior value") +
   theme_bw()
 
-ggsave("viz/Bayesian_occupancy_modeling/plot_all_intervals.pdf", p_all_int, width = 8, height = 10, dpi = 150)
+ggsave("outputs/v6/figures/stage1_v6_matched/plot_all_intervals.pdf", p_all_int, width = 8, height = 10, dpi = 150)
 cat("Saved: plot_all_intervals.pdf\n")
 
 # =============================================================================
@@ -684,7 +832,7 @@ for (f in seq_len(n_families)) {
   phi_f_cols <- grep(sprintf(",\\s*%d\\]$", f), phi_cols, value = TRUE)
   if (length(phi_f_cols) == 0) next
   cat(sprintf("\n  Family: %s\n", fam))
-  for (m in c("MOSAIC-A", "MOSAIC-B", "MOSAIC-C", "MOSAIC-D")) {
+  for (m in c("MOSAIC-A", "MOSAIC-D")) {
     idx <- which(filter_md$Collection.method == m)
     if (length(idx) == 0) next
     phi_m <- rowMeans(phi_samp[, phi_f_cols[idx], drop = FALSE])
@@ -697,7 +845,7 @@ cat("\n=== DERIVED: Mean p (detection probability) by method ===\n")
 p_cols <- grep("^p\\[", colnames(samples_combined), value = TRUE)
 p_samp <- samples_combined[, p_cols, drop = FALSE]
 
-for (m in c("MOSAIC-A", "MOSAIC-B", "MOSAIC-C", "MOSAIC-D")) {
+for (m in c("MOSAIC-A", "MOSAIC-D")) {
   idx <- which(filter_md$Collection.method == m)
   if (length(idx) == 0) next
   p_m <- rowMeans(p_samp[, idx, drop = FALSE])
@@ -711,7 +859,7 @@ for (f in seq_len(n_families)) {
   phi_f_cols <- grep(sprintf(",\\s*%d\\]$", f), phi_cols, value = TRUE)
   if (length(phi_f_cols) == 0) next
   cat(sprintf("\n  Family: %s\n", fam))
-  for (m in c("MOSAIC-A", "MOSAIC-B", "MOSAIC-C", "MOSAIC-D")) {
+  for (m in c("MOSAIC-A", "MOSAIC-D")) {
     idx <- which(filter_md$Collection.method == m)
     if (length(idx) == 0) next
     p_m  <- rowMeans(p_samp[, idx, drop = FALSE])
@@ -722,6 +870,71 @@ for (f in seq_len(n_families)) {
 }
 
 # =============================================================================
+# 14b. WAIC MODEL COMPARISON — site random effect vs no site effect
+# =============================================================================
+# Marginal (over the latent z) WAIC from the monitored phi[i,f] and p[i].
+# Integrating z out of  z ~ Bern(phi);  n_det ~ Binom(n_reps, p*z)  gives
+#   P(y) = (1 - phi) * 1{y == 0} + phi * dbinom(y, n_reps, p),
+# the "new filter observation" predictive density — the appropriate WAIC target
+# for an occupancy model, and identical in form across the two fits. The reduced
+# model re-runs with use_site = 0 (site term switched off; the RE nodes stay in
+# the graph but do not enter phi, so its WAIC is exactly a no-site model's).
+# Lower WAIC = better expected predictive accuracy.
+
+waic_marginal <- function(samp, n_det, n_reps) {
+  phi_cols <- grep("^phi\\[", colnames(samp), value = TRUE)
+  m  <- regmatches(phi_cols, regexec("^phi\\[([0-9]+),\\s*([0-9]+)\\]$", phi_cols))
+  ii <- as.integer(vapply(m, `[`, "", 2L))
+  ff <- as.integer(vapply(m, `[`, "", 3L))
+  p_cols <- paste0("p[", seq_len(nrow(n_det)), "]")
+  stopifnot(all(p_cols %in% colnames(samp)), !anyNA(ii), !anyNA(ff))
+  elpd <- numeric(length(phi_cols)); pw <- numeric(length(phi_cols))
+  for (cc in seq_along(phi_cols)) {
+    i <- ii[cc]; f <- ff[cc]; y <- n_det[i, f]; nr <- n_reps[i]
+    phi_s <- samp[, phi_cols[cc]]; p_s <- samp[, p_cols[i]]
+    lik_s <- (1 - phi_s) * (y == 0) + phi_s * dbinom(y, nr, p_s)
+    elpd[cc] <- log(mean(lik_s))    # log pointwise predictive density
+    pw[cc]   <- var(log(lik_s))     # effective-parameter penalty
+  }
+  elpd_point <- elpd - pw
+  names(elpd_point) <- phi_cols
+  list(waic = -2 * sum(elpd_point), lppd = sum(elpd), p_waic = sum(pw),
+       se = 2 * sqrt(length(elpd_point) * var(elpd_point)), elpd_point = elpd_point)
+}
+
+cat("\n=== WAIC MODEL COMPARISON (site RE vs none) ===\n")
+waic_site <- waic_marginal(samples_combined, n_det_mat, n_reps_vec)
+cat(sprintf("Site model    : WAIC = %.1f  (p_waic = %.1f, SE = %.1f)\n",
+            waic_site$waic, waic_site$p_waic, waic_site$se))
+
+cat("Re-fitting reduced model (use_site = 0)...\n")
+nimble_constants_ns <- modifyList(nimble_constants, list(use_site = 0))
+model_ns    <- nimbleModel(code = mammal_model_code, constants = nimble_constants_ns,
+                           data = nimble_data, inits = inits())
+model_ns_c  <- compileNimble(model_ns)
+conf_ns     <- configureMCMC(model_ns, monitors = c("phi", "p"), thin = 10)
+mcmc_ns     <- buildMCMC(conf_ns)
+mcmc_ns_c   <- compileNimble(mcmc_ns, project = model_ns)
+samples_ns  <- runMCMC(mcmc_ns_c, niter = n_iter + n_burnin, nburnin = n_burnin,
+                       nchains = 3, inits = lapply(1:3, function(x) inits()),
+                       thin = n_thin, samplesAsCodaMCMC = TRUE)
+samples_ns_combined <- do.call(rbind, lapply(samples_ns, as.matrix))
+waic_nosite <- waic_marginal(samples_ns_combined, n_det_mat, n_reps_vec)
+cat(sprintf("No-site model : WAIC = %.1f  (p_waic = %.1f, SE = %.1f)\n",
+            waic_nosite$waic, waic_nosite$p_waic, waic_nosite$se))
+
+# Paired difference (aligned by phi node); dWAIC > 0 favours the site model.
+common     <- intersect(names(waic_site$elpd_point), names(waic_nosite$elpd_point))
+diff_point <- waic_site$elpd_point[common] - waic_nosite$elpd_point[common]
+dwaic      <- waic_nosite$waic - waic_site$waic
+se_dwaic   <- 2 * sqrt(length(diff_point) * var(diff_point))
+cat(sprintf("\ndWAIC (no-site - site) = %.1f +/- %.1f (SE of difference)\n", dwaic, se_dwaic))
+cat(sprintf("=> site effect %s predictive fit; difference is %s (|dWAIC| %s 2*SE)\n",
+            if (dwaic > 0) "IMPROVES" else "does NOT improve",
+            if (abs(dwaic) > 2 * se_dwaic) "clear" else "within MC/statistical noise",
+            if (abs(dwaic) > 2 * se_dwaic) ">" else "<="))
+
+# =============================================================================
 # 15. SAVE
 # =============================================================================
 
@@ -730,9 +943,11 @@ save(
   nimble_data, nimble_constants,
   filter_ids, filter_md, n_reps_vec, n_det_mat,
   focal_families, detect_summary,
-  file = "outputs/MOSAIC_mammal_families_twolevel_v3_results.RData"
+  n_sites, site_idx, n_temporal, STATION_RADIUS_KM,
+  waic_site, waic_nosite, dwaic, se_dwaic, samples_ns_combined,
+  file = "outputs/v6/MOSAIC_mammal_families_twolevel_stage1_AvsD_v6_matched_results.RData"
 )
 
-cat("\nAll results saved to: MOSAIC_mammal_families_twolevel_v3_results.RData\n")
+cat("\nAll results saved to: MOSAIC_mammal_families_twolevel_stage1_AvsD_results.RData\n")
 cat("Script complete.\n")
 
