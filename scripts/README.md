@@ -1,1 +1,0 @@
-These scripts should be run in order using as initial input the raw data and metadata in the data directory.  Each script is designed to be able to be run on its own, using the outputs from previous scripts, which are saved in the outputs directory.

@@ -21,7 +21,7 @@ models <- list(
   list(label="v3 (no site)",
        file="outputs/MOSAIC_mammal_families_twolevel_v3_results.RData"),
   list(label="v4 (+ site)",
-       file=".claude/worktrees/script-08-nimble-site-effects-0d8b17/outputs/MOSAIC_mammal_families_twolevel_v3_results.RData"),
+       file="outputs/v4/MOSAIC_mammal_families_twolevel_v4_results.RData"),
   list(label="v5 Stage 2",
        file="outputs/v5/MOSAIC_mammal_families_twolevel_v5_results.RData")
 )
@@ -48,11 +48,12 @@ df$Variable <- factor(df$Variable, levels=c("Volume","Distance","Filtration time
 df <- df[order(df$Variable), ]
 write.csv(df, "model_evolution_tracking/Q2_table_variable_importance.csv", row.names=FALSE)
 
+p_time_neg <- 1 - as.numeric(df$`P(effect > 0)`[df$Variable == "Filtration time" & df$Model == "v5 Stage 2"])
 foot <- c(
  paste0("OR per SD is the posterior median of exp(coefficient); 95% CrI = 2.5/97.5 posterior ",
    "quantiles; P = posterior probability the effect exceeds zero. Volume and distance are capture-",
    "submodel effects; filtration time is a detection-submodel effect, so its low P(effect > 0) ",
-   "indicates a high probability of a negative (cost) effect (v5 Stage 2 P(effect < 0) = 0.97)."),
+   sprintf("indicates a high probability of a negative (cost) effect (v5 Stage 2 P(effect < 0) = %.2f).", p_time_neg)),
  paste0("Scaling caveat: v5 Stage 2 z-scores LOG volume and LOG transect distance, so 1 SD is a ",
    "fold-change on the log scale; v3 and v4 z-score RAW volume and distance. Per-SD magnitudes are ",
    "therefore not in identical units across models, though direction and relative ranking are comparable."),

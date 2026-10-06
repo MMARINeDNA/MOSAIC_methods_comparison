@@ -1,5 +1,5 @@
 # =============================================================================
-# Map — target-taxa detections along the 6 A+B transects
+# Map — target-taxa detections along the 7 A+B transects
 # =============================================================================
 # Reuses the repo's mapping idiom (scripts/09: maps::map_data("world") coastline,
 # CalCOFI extent, transects as start->end geom_segments over an ocean-blue panel).
@@ -37,7 +37,7 @@ famdet <- function(fid, fam) {
   if (!length(ft)) return(0L); as.integer(sum(otu_filt[ft, fid]) > 0)
 }
 
-# --- identify the 6 A/B chains (parent A + its B segment series) ---
+# --- identify the A/B chains (7 in SR2408) (parent A + its B segment series) ---
 fm <- md[!duplicated(md$FilterID), ]
 fm$t0 <- as.numeric(as.POSIXct(fm$datetime_start, tz = "UTC"))
 fm$t1 <- as.numeric(as.POSIXct(fm$datetime_end,   tz = "UTC"))
@@ -118,17 +118,17 @@ p <- ggplot() +
                linewidth = 1.1, lineend = "round", alpha = 0.95) +
   # every segment labelled A / B (ggrepel, no overlap); A labels north, B south
   ggrepel::geom_text_repel(data = chain_geom, aes(x = lon_mid, y = lab_lat, label = AB),
-                           size = 2.7, fontface = "bold", colour = "grey15",
+                           size = 4.2, fontface = "bold", colour = "grey15",
                            max.overlaps = Inf, seed = 42, min.segment.length = 0.15,
                            segment.size = 0.2, segment.colour = "grey60") +
   # place-name labels over the land (green), not the ocean
   annotate("text", x = -116.55, y = 32.55, label = "San Diego",
-           hjust = 1, fontface = "italic", size = 3.1, colour = "black") +
+           hjust = 1, fontface = "italic", size = 4.4, colour = "black") +
   annotate("text", x = -120.30, y = 34.62, label = "Point Conception",
-           hjust = 0, fontface = "italic", size = 3.1, colour = "black") +
+           hjust = 0, fontface = "italic", size = 4.4, colour = "black") +
   scale_colour_manual(name = "Family", values = fam_col, drop = FALSE) +
   coord_fixed(ratio = 1, xlim = ca_lon, ylim = ca_lat, expand = FALSE) +
-  labs(title = "Target-taxa detections along the 6 A+B transects (SR2408)",
+  labs(title = sprintf("Target-taxa detections along the %d A+B transects (SR2408)", length(chains)),
        subtitle = "A transect drawn north of its B segments; dashed grey = no target taxa; colour = family",
        x = NULL, y = NULL) +
   guides(colour = guide_legend(override.aes = list(linewidth = 2.5))) +

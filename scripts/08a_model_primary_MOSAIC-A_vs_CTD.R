@@ -1,6 +1,6 @@
 # =============================================================================
 # MOSAIC Marine Mammals — v6 PRIMARY (Q1): A-vs-D, ALL DATA + cruise contrast.
-#   Uses every MOSAIC-A (86) and every CTD/MOSAIC-D (26) from both cruises, with a
+#   Uses every MOSAIC-A (101) and every CTD/MOSAIC-D (36) from both cruises, with a
 #   fixed Fall-vs-Summer cruise term, and relies on the hierarchical model (site RE +
 #   inshore/offshore) to absorb the uneven A-vs-D sampling effort. NO data excluded
 #   (Summer CTD hotspot F101/F102 included -> conservative). Machinery otherwise

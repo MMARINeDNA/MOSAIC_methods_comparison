@@ -1,4 +1,4 @@
-#This script takes an initial phyloseq object and calculates important metadata like distance of transect, total time filtered, and then outputs csvs per PCR replicate, and per sample in two versions: with ASV counts per taxon, and as just detection 1/0.  
+#This script takes an initial phyloseq object and the corrected sample table (1.5_metadata_geocorrections.R), calculates important metadata like total time filtered, and then outputs csvs per PCR replicate, and per sample in two versions: with ASV counts per taxon, and as just detection 1/0.  
 
 library(geosphere)
 library(geodist)
@@ -20,6 +20,14 @@ MOSAIC.ps<-readRDS("outputs/MOSAIC.ps.RDS")
 contams<-c("Homo","Bos","Sus","Gallus","Canis","Felis","Meleagris","Mus")
 blanks<-subset_samples(MOSAIC.ps,is.na(Collection.device))
 blanks <- prune_taxa(taxa_sums(blanks) > 0, blanks)
+# Sample table from 1.5_metadata_geocorrections.R: corrected locations, dist_km, Inshore.Offshore; it also holds the controls
+# (field blanks), whose collection method 1.5 has removed. Blanks take their metadata from it.
+MOSAIC_sample_data1<-read.csv("outputs/geodata_corrected_MOSAIC_metadata.csv")
+MOSAIC_sample_data<-column_to_rownames(MOSAIC_sample_data1,var = "X")
+stopifnot(all(sample_names(blanks) %in% rownames(MOSAIC_sample_data)))
+blanks_md <- data.frame(sample_data(blanks), check.names = FALSE)
+blanks_md$Collection.method <- MOSAIC_sample_data[rownames(blanks_md), "Collection.method"]
+sample_data(blanks) <- sample_data(blanks_md)
 
 nonblanks<-c("CTD", "Underway system")
 carboys<-("MOSAIC-C")
@@ -35,14 +43,8 @@ blank_otu_tab<-cbind(as.data.frame(otu_table(blanks)))
 
 saveRDS(blanks, "outputs/MOSAIC_blanks.ps.RDS")
 
-MOSAIC_sample_data<-cbind(data.frame(sample_data(MOSAIC.ps)))
-#add Inshore/Offshore column manually, based on station start and end numbers (which were not entered correctly in the field.)
-
-write.csv(MOSAIC_sample_data,"outputs/MOSAIC_sample_data_to_add_inshore-offshore.csv")
-#edit in Excel or similar based on station 60 being the cutoff
-MOSAIC_sample_data1<-read.csv("data/MOSAIC_sample_data_inshore.offshore_added.csv")
-
-MOSAIC_sample_data<-column_to_rownames(MOSAIC_sample_data1,var = "X")
+# real samples only (the blanks were separated above)
+MOSAIC_sample_data<-MOSAIC_sample_data[sample_names(MOSAIC.ps), ]
 
 sample_data(MOSAIC.ps)<-MOSAIC_sample_data
 
@@ -65,27 +67,6 @@ MOSAIC_sample_data<-MOSAIC_sample_data%>%
                                                     3,
                                                     1))))))))
 
-#Fix missing end-point data for CTD samples
-
-MOSAIC_sample_data<-MOSAIC_sample_data%>%
-  mutate(Longitude.end = if_else(Collection.device == "CTD", Longitude.start, Longitude.end))%>%
-  mutate(Latitude.end = if_else(Collection.device == "CTD", Latitude.start, Latitude.end))
-  
-
-
-
-start<-cbind(MOSAIC_sample_data$Longitude.start,MOSAIC_sample_data$Latitude.start)
-end<-cbind(MOSAIC_sample_data$Longitude.end,MOSAIC_sample_data$Latitude.end)
-colnames (start) <- colnames (end) <- c ("x", "y")
-distances_in_m<-geodist(start,end,paired = TRUE,measure = "geodesic")
-
-MOSAIC_sample_data$dist_km<-distances_in_m/1000
-
-MOSAIC_sample_data<-MOSAIC_sample_data%>%
-  mutate(dist_km= 
-           if_else(Collection.device=="CTD",
-                   0,
-                   dist_km))
 
 sample_data(MOSAIC.ps)<-MOSAIC_sample_data
 

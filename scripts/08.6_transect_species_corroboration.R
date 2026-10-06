@@ -12,7 +12,7 @@
 #       project's taxonomic conventions), with the ring also encoding HOW CLOSE
 #       the paired A got (species / family-only / missed).
 #       outputs/v5/figures/transect_source/species_corrob_byspecies.pdf
-# A and B only (no C, no D). Exploratory: 6 chains, SR2408.
+# A and B only (no C, no D). Exploratory: 7 chains, SR2408.
 # =============================================================================
 
 suppressMessages({library(ggplot2)})

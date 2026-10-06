@@ -1,6 +1,6 @@
 # =============================================================================
 # MOSAIC Marine Mammals — v6 SENSITIVITY (Q1): all-MOSAIC (A/B/C) vs CTD.
-#   Uses every MOSAIC-A (86) and every CTD/MOSAIC-D (26) from both cruises, with a
+#   Uses every MOSAIC-A (101) and every CTD/MOSAIC-D (36) from both cruises, with a
 #   fixed Fall-vs-Summer cruise term, and relies on the hierarchical model (site RE +
 #   inshore/offshore) to absorb the uneven A-vs-D sampling effort. NO data excluded
 #   (Summer CTD hotspot F101/F102 included -> conservative). Machinery otherwise
@@ -83,7 +83,7 @@ cat("Taxa table:      ", nrow(tax), "rows x", ncol(tax), "cols\n")
 cat("OTU table:       ", nrow(otu), "rows x", ncol(otu), "cols (taxa x samples)\n\n")
 
 # v6 SENSITIVITY (all-MOSAIC): ALL cruises, ALL surface methods (A/B/C) vs CTD (D).
-# Every filter (138); no data excluded. d_method = MOSAIC-vs-CTD; the site RE absorbs
+# Every filter (163); no data excluded. d_method = MOSAIC-vs-CTD; the site RE absorbs
 # the concurrent A-B and A-C pairs (verified: all 20 B and 6 C share a site with an A).
 md  <- md[md$Collection.method %in% c("MOSAIC-A", "MOSAIC-B", "MOSAIC-C", "MOSAIC-D"),
           , drop = FALSE]

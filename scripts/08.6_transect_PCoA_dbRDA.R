@@ -9,7 +9,7 @@
 #     Condition(chain) — does composition change with position ALONG the transect
 #     after removing between-transect (chain / parent-A) differences? "chain" is
 #     the parent-A grouping (the condition). Kept as a stat, dropped from the figure.
-# Read depth controlled by relative abundance. Exploratory: 17 B segments, 6
+# Read depth controlled by relative abundance. Exploratory: 20 B segments, 7
 # chains (SR2408, offshore-heavy).
 # Inputs : outputs/MOSAIC_taxnamed_{sample_data,otu_table}_metadata_filtered.csv
 # Output : outputs/v5/figures/transect_source/transect_PCoA_ordination.pdf
@@ -98,12 +98,12 @@ pa <- ggplot(sc, aes(PCo1, PCo2)) +
   geom_point(data = subset(sc, isA & !isParentA), shape = 17, colour = "grey55", size = 2) +
   geom_path(data = seg_pts, aes(group = chain, colour = chain),
             arrow = grid::arrow(length = grid::unit(0.1, "cm")), alpha = 0.85) +
-  geom_point(data = seg_pts, aes(colour = chain, shape = role), size = 3.2) +
-  geom_text(data = seg_pts, aes(label = seg), size = 2.2, fontface = "bold", colour = "white") +
+  geom_point(data = seg_pts, aes(colour = chain, shape = role), size = 5.4) +
+  geom_text(data = seg_pts, aes(label = seg), size = 4.0, fontface = "bold", colour = "white") +
   # parent A of each chain: large triangle in the chain colour, labelled A
-  geom_point(data = pa_pts, aes(colour = chain, shape = role), size = 4.2) +
+  geom_point(data = pa_pts, aes(colour = chain, shape = role), size = 5.6) +
   geom_text(data = pa_pts, aes(label = "A", colour = chain),
-            vjust = -1.1, size = 2.6, fontface = "bold", show.legend = FALSE) +
+            vjust = -1.1, size = 4.2, fontface = "bold", show.legend = FALSE) +
   scale_shape_manual(name = "MOSAIC method",
                      values = c(`A (parent transect)` = 17, `B (segment)` = 16)) +
   guides(colour = guide_legend(order = 1, override.aes = list(shape = 16)),

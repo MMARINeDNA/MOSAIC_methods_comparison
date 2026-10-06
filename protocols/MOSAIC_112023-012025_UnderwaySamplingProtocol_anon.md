@@ -205,6 +205,9 @@ Goal: filter at least 5 L water SLOWLY and CONTINUOUSLY over the course of a tra
 4. Pump Bleach and MilliQ: Turn the pump on and pump ~500mL of bleach through each tube, then switch the tube over to the milliQ and pump ~2L of milliQ through the same tube to rinse. Repeat this step for each tube.
 5. Dry equipment (See Figure 3): Dry the filter housings and tubing in a fumigated hood if possible. Once dry, use UV light to further disinfect. Store equipment in sterile Whirlpak bags or similar. 
 
+#### Negative Controls
+
+To take a negative control, start with a filter in a housing. Fill a Whirl-Pak with 2 L DI water and run it through the filter with the peristaltic pump. Once the 2 liters have flowed through the housing, take the housing to the sink where the underway samples are taken and rub the housing around the mouths of the outflow carboys used for underway samples. Put the housing in the PCR hood and process the filter as normal.
 
 #### Data records
 - While filtering, record all the relevant information on the printed copy of the appropriate data sheet (underway vs Niskin samples).

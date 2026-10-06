@@ -250,7 +250,8 @@ ca_lat   <- c(29,    36)
 method_abbrev <- c("MOSAIC-A" = "A", "MOSAIC-B" = "B",
                    "MOSAIC-C" = "C", "MOSAIC-D" = "D")
 
-make_panel <- function(panel, fsz = 1.0) {
+make_panel <- function(panel, fsz = 1.0, tag = NULL, axis_pt = 6 * fsz, legend_pt = 10 * fsz,
+                       title_mm = 4.5 * fsz, tag_mm = 6.3 * fsz, legend_key_h = 0.55 * legend_pt / 10) {   # sizes: points (axis, legend) / mm (panel title, panel letter) / cm (legend row height)
 
   title_common <- panel$title_common
   cat("\n── Panel:", title_common, "──\n")
@@ -395,25 +396,25 @@ make_panel <- function(panel, fsz = 1.0) {
     }
   }
 
-  # Pass 3: method labels ────────────────────────────────────────
-  for (x in sp_det_list) {
-    det <- x$det; col <- x$sp$color
-    if (nrow(det) == 0) next
-    det_line   <- det %>% filter(Collection.method != "MOSAIC-D") %>%
-                         mutate(disp_label = method_label)
-    det_pt     <- det %>% filter(Collection.method == "MOSAIC-D") %>%
-                         mutate(disp_label = "D")
-    det_labels <- bind_rows(det_line, det_pt)
-    if (nrow(det_labels) == 0) next
+  # Pass 3: method labels (one layer across species so labels repel each other)
+  det_labels <- bind_rows(lapply(sp_det_list, function(x) {
+    det <- x$det
+    if (nrow(det) == 0) return(NULL)
+    det %>% mutate(
+      disp_label = ifelse(Collection.method == "MOSAIC-D", "D", method_label),
+      lab_col    = x$sp$color
+    )
+  }))
+  if (nrow(det_labels) > 0) {
     p <- p + geom_label_repel(
       data          = det_labels,
-      aes(x = lon_mid, y = lat_mid, label = disp_label),
-      size = 2.4, fontface = "bold",
-      color = col, fill = "white",
+      aes(x = lon_mid, y = lat_mid, label = disp_label, color = I(lab_col)),
+      size = 3.0 + 1.2 * fsz, fontface = "bold", fill = "white",
       label.padding = unit(0.15, "lines"), label.size = 0.3, alpha = 0.95,
-      box.padding = 0.4, point.padding = 0.3, min.segment.length = 0.2,
-      segment.color = col, segment.size = 0.3, segment.alpha = 0.7,
-      max.overlaps = Inf, seed = 42
+      box.padding = 0.7, point.padding = 0.5, min.segment.length = 0.2,
+      segment.size = 0.3, segment.alpha = 0.7,
+      force = 4, force_pull = 0.5, max.iter = 50000, max.time = 3,
+      max.overlaps = Inf, seed = 42, show.legend = FALSE
     )
   }
 
@@ -430,25 +431,26 @@ make_panel <- function(panel, fsz = 1.0) {
   )
 
   p <- p +
-    geom_segment(data = legend_df,
-                 aes(x = x, xend = xend, y = y, yend = yend, color = Species),
-                 linewidth = 2.5) +
-    scale_color_manual(name = "", values = sp_col_named,
+    geom_point(data = legend_df, aes(x = x, y = y, color = Species),
+               shape = 16, size = 3.5 * legend_pt / 10) +
+    scale_color_manual(name = "", values = sp_col_named, breaks = names(sp_col_named),
                        labels = lapply(sp_lab_named, function(l) parse(text = l))) +
-    guides(color = guide_legend(override.aes = list(linewidth = 2.5))) +
+    guides(color = guide_legend(override.aes = list(shape = 16, size = 3.5 * legend_pt / 10))) +
     coord_fixed(ratio = 1, xlim = ca_lon, ylim = ca_lat, expand = FALSE) +
     labs(x = NULL, y = NULL) +
     theme_bw(base_size = 10 * fsz) +
     theme(
       legend.position      = c(0.99, 0.01),
       legend.justification = c(1, 0),
-      legend.background    = element_rect(fill = alpha("white", 0.82), color = NA),
-      legend.text          = element_text(size = 7 * fsz),
-      legend.key.width     = unit(0.5 * fsz, "cm"),
-      legend.key.height    = unit(0.35 * fsz, "cm"),
-      legend.margin        = margin(3, 5, 3, 5),
+      legend.background    = element_rect(fill = alpha("white", 0.85), color = NA),
+      legend.text          = element_text(size = legend_pt),
+      legend.key           = element_blank(),
+      legend.key.width     = unit(0.6 * legend_pt / 10, "cm"),
+      legend.key.height    = unit(legend_key_h, "cm"),
+      legend.spacing.y     = unit(0, "pt"),
+      legend.margin        = margin(3, 6, 3, 6),
       panel.grid           = element_blank(),
-      axis.text            = element_text(size = 6 * fsz),
+      axis.text            = element_text(size = axis_pt),
       plot.margin          = margin(2, 4, 2, 4),
       panel.background     = element_rect(fill = "#d6e8f5")
     )
@@ -474,31 +476,35 @@ make_panel <- function(panel, fsz = 1.0) {
     stringsAsFactors = FALSE
   )
   dot_x  <- title_df$x
-  text_x <- title_df$x + 0.035
+  text_x <- title_df$x + 0.045
 
   title_p <- ggplot() +
     annotate("text", x = 0.5, y = header_y, label = panel$title_common,
-             fontface = "bold", size = 4.5 * fsz, hjust = 0.5, color = "grey10")
+             fontface = "bold", size = title_mm, hjust = 0.5, color = "grey10")
+  if (!is.null(tag))   # panel letter on the same line as the panel title
+    title_p <- title_p + annotate("text", x = 0.005, y = header_y, label = tag, fontface = "bold",
+                                  size = tag_mm, hjust = 0, color = "grey10")
   for (si in seq_len(n_sps)) {
     title_p <- title_p +
       annotate("point", x = dot_x[si], y = title_df$y[si],
-               color = title_df$color[si], size = 3.0 * fsz) +
+               color = title_df$color[si], size = 4.5 * fsz) +
       annotate("text",  x = text_x[si], y = title_df$y[si] + 0.12,
-               label = title_df$common[si], fontface = "bold", size = 2.5 * fsz,
+               label = title_df$common[si], fontface = "bold", size = 4.4 * fsz,
                hjust = 0, color = "grey10") +
       annotate("text",  x = text_x[si], y = title_df$y[si] - 0.10,
-               label = title_df$sci[si], fontface = "italic", size = 2.2 * fsz,
+               label = title_df$sci[si], fontface = "italic", size = 4.4 * fsz,
                hjust = 0, color = "grey10")
   }
   title_p <- title_p + xlim(0, 1) + ylim(0, 1) +
     theme_void() + theme(plot.margin = margin(4, 0, 0, 0))
 
-  strip_h <- if (n_rows == 1) 0.14 else 0.22
+  strip_h <- if (n_rows == 1) 0.20 else 0.32
   cowplot::plot_grid(title_p, p, ncol = 1, rel_heights = c(strip_h, 1))
 }
 
 # ── 10. Loop over cruises ─────────────────────────────────────
 cruises <- sort(unique(meta2$Cruise))
+cruise_season <- c(RS2311 = "Fall 2023", SR2408 = "Summer 2024", RL2501 = "Winter 2025")
 cat("\nCruises:", paste(cruises, collapse=", "), "\n")
 
 # Accumulate caption text across cruises for separate results document
@@ -513,9 +519,10 @@ for (cruise in cruises) {
   # Collect captions for this cruise (computed inside make_panel but not shown)
   cruise_captions <- list()
 
-  panels <- lapply(panels_def, function(panel) {
+  panels <- lapply(seq_along(panels_def), function(i) {
+    panel <- panels_def[[i]]
     all_filters <<- all_filters_cr
-    p <- make_panel(panel)
+    p <- make_panel(panel, tag = LETTERS[i])
     all_filters <<- all_filters_orig
     p
   })
@@ -534,11 +541,7 @@ for (cruise in cruises) {
   combined <- (panels[[1]] | panels[[2]]) /
               (panels[[3]] | panels[[4]]) +
     plot_annotation(
-      title    = paste0("Marine Vertebrate eDNA Detection — MOSAIC Sampling (", cruise, ")"),
-      subtitle = paste0(
-        "Colored segments = detecting transects with 5 km gradient buffer (opaque core, transparent at 5 km) | ",
-        "Grey dashed = non-detecting effort | CTD stations shown as filled circles or pie charts (co-detections)"
-      ),
+      title    = paste0("Rare Taxa Detections – ", cruise_season[[cruise]]),
       theme = theme(
         plot.title    = element_text(face = "bold", size = 13, hjust = 0.5),
         plot.subtitle = element_text(size = 8, color = "grey40", hjust = 0.5)
@@ -558,9 +561,10 @@ for (cruise in cruises) {
 
   # ── Journal-quality PDF ───────────────────────────────────────
   cat("  Rendering journal PDF...\n")
-  jpanels <- lapply(panels_def, function(panel) {
+  jpanels <- lapply(seq_along(panels_def), function(i) {
+    panel <- panels_def[[i]]
     all_filters <<- all_filters_cr
-    p <- make_panel(panel, fsz = 0.58)
+    p <- make_panel(panel, fsz = 0.58, tag = LETTERS[i], axis_pt = 6, legend_pt = 8, title_mm = 3.7, tag_mm = 4.6, legend_key_h = 0.34)
     all_filters <<- all_filters_orig
     p
   })
@@ -568,11 +572,7 @@ for (cruise in cruises) {
   jcombined <- (jpanels[[1]] | jpanels[[2]]) /
                (jpanels[[3]] | jpanels[[4]]) +
     plot_annotation(
-      title    = paste0("Marine Vertebrate eDNA Detection — MOSAIC Sampling (", cruise, ")"),
-      subtitle = paste0(
-        "Colored segments = detecting transects with 5 km gradient buffer (opaque core, transparent at 5 km) | ",
-        "Grey dashed = non-detecting effort | CTD stations shown as filled circles or pie charts (co-detections)"
-      ),
+      title    = paste0("Rare Taxa Detections – ", cruise_season[[cruise]]),
       theme = theme(
         text          = element_text(family = "serif"),
         plot.title    = element_text(face = "bold", size = 8, hjust = 0.5, family = "serif"),

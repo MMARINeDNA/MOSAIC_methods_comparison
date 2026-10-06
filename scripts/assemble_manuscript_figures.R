@@ -39,23 +39,24 @@ ggsave("outputs/v5/figures/v5_surface/fig5_model.png", fig5,
 # in A). The map (C) is coord_fixed (aspect-locked) and therefore width-limited, so its
 # "Family" key is moved to the bottom to give the map full width. Chain key lives on
 # PCoA (B), suppressed on BC (A) and corroboration (D). Saved as vector PDF + 300-dpi PNG.
-top7 <- (free(bc + guides(colour = "none"), side = "l") | pcoa) +
+top7 <- (free(bc + guides(colour = "none"), side = "l") | pcoa + theme(legend.text = element_text(size = 12), legend.title = element_text(size = 13))) +
         plot_layout(widths = c(1, 1.55))   # give PCoA (B) >= BC (A) plot width
 # Panel order: A/B (top), position-along-transect corroboration (C), then the map (D)
 # enlarged full-width for readability. free()-ing the map on the left stops it aligning
 # to panel C's family-label column (which otherwise left-pads the map with whitespace).
 fig7 <- (top7 /
         (corr + guides(colour = "none")) /
-        free(mp, side = "l")) +
-        plot_layout(heights = c(0.8, 0.7, 2.6)) +
+        free(mp + theme(legend.text = element_text(size = 16), legend.title = element_text(size = 17),   # map (D) family key: larger
+                        legend.key.size = unit(1.0, "cm"), legend.key.width = unit(1.2, "cm")), side = "l")) +
+        plot_layout(heights = c(0.95, 1.15, 2.3)) +
         plot_annotation(tag_levels = "A") &
-        theme(axis.text = element_text(colour = "black"),   # black text for readability
-              axis.title = element_text(colour = "black"),
-              strip.text = element_text(colour = "black"),
+        theme(axis.text = element_text(colour = "black", size = 12),      # fig 7 is built at 11 x 15 in and shrunk to page
+              axis.title = element_text(colour = "black", size = 14),    # width, so text is large here (~7 pt in print)
+              strip.text = element_text(colour = "black", size = 12),
               legend.text = element_text(colour = "black"),
               legend.title = element_text(colour = "black"),
-              plot.tag = element_text(colour = "black"),
-              plot.title = element_text(colour = "black"))
+              plot.tag = element_text(colour = "black", size = 22, face = "bold"),
+              plot.title = element_text(colour = "black", size = 14))
 ggsave("outputs/v5/figures/transect_source/fig7_q3_transect_source.pdf", fig7,
        width = 11, height = 15, device = grDevices::cairo_pdf)
 ggsave("outputs/v5/figures/transect_source/fig7_q3_transect_source.png", fig7,

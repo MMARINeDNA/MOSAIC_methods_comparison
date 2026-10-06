@@ -15,7 +15,7 @@
 #    and reported to the console below.)
 # ONLY MOSAIC-A and MOSAIC-B are used here. MOSAIC-C (carboy) is excluded from
 # this question entirely — it is not part of an A/B transect series.
-# Exploratory: 6 multi-segment chains (SR2408, offshore-heavy). Read depth is
+# Exploratory: 7 multi-segment chains (SR2408, offshore-heavy). Read depth is
 # controlled by relative abundance.
 # Inputs : outputs/MOSAIC_taxnamed_{sample_data,taxa_table,otu_table}_metadata_filtered.csv
 # Outputs: outputs/v5/figures/transect_source/B_series_vs_A_braycurtis_dissimilarity.pdf
@@ -137,7 +137,7 @@ bc_plot <- ggplot(segdf, aes(dist_mid_km, bc_A, colour = factor(chain))) +
        subtitle = sprintf("whole-community relative-abundance (all taxa); A closest to origin segment in %d/%d chains, Spearman(distance, BC) = %.2f",
                           sum(closest == 1), length(closest), rho),
        x = "B segment distance from transect origin (km)",
-       y = "Bray-Curtis dissimilarity (B segment vs parent A)", colour = "transect") + theme_bw()
+       y = "Bray-Curtis dissimilarity\n(B segment vs parent A)", colour = "transect") + theme_bw()
 
 ggsave("outputs/v5/figures/transect_source/B_series_vs_A_braycurtis_dissimilarity.pdf",
        bc_plot, width = 8, height = 5, device = grDevices::cairo_pdf)

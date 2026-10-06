@@ -10,18 +10,18 @@
 #
 # Steps applied:
 #   1. Correct F021 filtration end time (12:22 -> 00:22; typo, 12h off)
-#   2. Drop samples with no GPS coordinates (10 FilterIDs)
-#   3. Drop samples with NA model covariates (4 FilterIDs)
-#   4. Drop samples with physically impossible dist_km (17 FilterIDs):
-#      implied ship speed exceeds R/V Sally Ride top speed of 14.8 kts
-#   5. Dynamic NA sweep: drop any remaining rows with NA in required covariates
+#   2. Drop MOSAIC-A/B samples whose implied ship speed
+#      (dist_km / filtration time) exceeds the R/V Sally Ride top speed of 14.8 kts
+#   3. Drop any samples with NA in the required covariates
 #
-# NOTE: F021 is corrected in step 1 but its corrected implied speed (~23.6 kts)
-#       still exceeds 14.8 kts, so it is dropped in step 4 regardless.
-#       The correction is applied first for data-integrity purposes.
-#
-# Total dropped: 32 FilterIDs (31 from static lists + 1 from dynamic sweep)
-# Total retained: 133 FilterIDs
+# Revision round 2: start/end locations (and therefore dist_km) now come from
+# the corrected-locations workbook (applied in 02_prep_detection_prob_metadata.R).
+# The hard-coded drop lists used in the original submission (10 "no GPS" FilterIDs,
+# 4 "NA covariate" FilterIDs, 12 "impossible dist_km" FilterIDs; this header said 32 dropped /
+# 133 retained, but the committed output had 138) existed only because of the uncorrected locations, so exclusions
+# are now applied as rules to the corrected data. The old lists are kept below
+# (legacy_static_drops) purely to report which of those samples are now retained.
+# =============================================================================
 # =============================================================================
 
 library(phyloseq)
@@ -65,61 +65,51 @@ md$filtration_time_min[f021_rows] <- new_filt_min
 cat(sprintf("  Corrected Filtration.time.end : 00:22\n"))
 cat(sprintf("  Corrected filtration_time_min : %.0f min\n", new_filt_min))
 
-# Flag: corrected speed is still > 14.8 kts — will be dropped in step 4
+# Corrected implied speed (informational): with corrected locations F021 is no
+# longer a speed outlier, so it is retained
 f021_speed <- unique(as.numeric(md$dist_km[f021_rows])) /
               (new_filt_min / 60) / 1.852
-cat(sprintf("  Corrected implied speed       : %.1f kts (> 14.8 kt limit; will be dropped)\n",
-            f021_speed))
+cat(sprintf("  Corrected implied speed       : %.1f kts\n", f021_speed))
+
+# Write the corrected F021 values back into the phyloseq object (previously they
+# were only applied to the md copy, which was fine while F021 was always dropped)
+sample_data(ps) <- sample_data(md)
 
 # =============================================================================
-# 3. BUILD DROP LISTS
+# 3. SPEED-BASED EXCLUSION (corrected locations)
 # =============================================================================
+# Implied ship speed = dist_km / hours filtered. A value above the R/V Sally Ride
+# maximum (14.8 kts) is physically impossible and indicates bad end coordinates.
+# Speed filter applies to MOSAIC-A and MOSAIC-B only: MOSAIC-C uses a carboy
+# system (water collected, homogenized, then a quick 5 L filtration), so
+# dist_km / time filtered is not comparable to ship speed; CTD (MOSAIC-D) has
+# dist_km = 0 by definition.
+max_speed_kts <- 14.8
+filt_min      <- as.numeric(md$filtration_time_min)
+filt_min[!is.na(filt_min) & filt_min <= 0] <- NA   # 0 min = missing, not instantaneous
+speed_kts     <- as.numeric(md$dist_km) / (filt_min / 60) / 1.852
+too_fast      <- md$Collection.method %in% c("MOSAIC-A", "MOSAIC-B") &
+                 !is.na(speed_kts) & speed_kts > max_speed_kts
+drop_impossible_speed <- unique(na.omit(md$FilterID[too_fast]))
 
-# --- 3a. No GPS coordinates ---
-drop_no_coords <- c("C47","C76","C77","C18","C19","C27","C33","C35","C36","F010")
+cat(sprintf("\nSpeed rule (> %.1f kts, MOSAIC-A/B): %d FilterIDs dropped%s\n",
+            max_speed_kts, length(drop_impossible_speed),
+            if (length(drop_impossible_speed))
+              paste0(" (", paste(drop_impossible_speed, collapse = ", "), ")") else ""))
 
-# --- 3b. NA required covariates (dist_km or Volume.filtered) ---
-drop_na_covars <- c("Fall13", "Fall17", "Fall65", "F076")
-
-# --- 3c. Physically impossible dist_km ---
-# For each sample below the Haversine distance between start and end coordinates
-# implies a ship speed exceeding 14.8 kts (R/V Sally Ride maximum).
-# Most probable cause: end coordinates reflect nominal CalCOFI station-grid
-# positions rather than actual GPS at filtration end.
-# Speed range across these 17 samples: 16.5 – 293.8 kts.
-#
-# F021 is included here; even after correcting filtration_time_min (step 2)
-# the implied speed remains ~23.6 kts.
-# Speed filter applies to MOSAIC-A and MOSAIC-B only.
-# MOSAIC-C uses a carboy system to collect water for homogenization then a quick 5L filtration,
-# so the dist_km/time filtered calculation is not directly comparable to ship speed.
-# MOSAIC-C samples F008, F024, F044, F082, F095 are therefore retained.
-drop_impossible_dist <- c(
-  # RS2311 (9 samples, MOSAIC-A): implied speed 16.5 – 293.8 kts
-  "Fall02", "Fall05", "Fall07", "Fall20", "Fall21",
-  "Fall22", "Fall26", "Fall61", "Fall86",
-  # SR2408 (3 samples, MOSAIC-A): implied speed 20.0 – 29.5 kts
-  "F011", "F022", "F030"
-)
-
-drop_all <- union(drop_no_coords, union(drop_na_covars, drop_impossible_dist))
+# Original-submission static drops, kept only for the "now retained" report below
+legacy_static_drops <- c(
+  "C47","C76","C77","C18","C19","C27","C33","C35","C36","F010",   # no GPS
+  "Fall13", "Fall17", "Fall65", "F076",                           # NA covariates
+  "Fall02", "Fall05", "Fall07", "Fall20", "Fall21", "Fall22",     # impossible dist_km
+  "Fall26", "Fall61", "Fall86", "F011", "F022", "F030",
+  "F021")
 
 # =============================================================================
-# 4. APPLY STATIC DROPS
+# 4. APPLY SPEED EXCLUSION
 # =============================================================================
 
-all_fids  <- unique(na.omit(md$FilterID))
-n_dropped <- length(intersect(drop_all, all_fids))
-cat(sprintf("\nStatic drops:\n"))
-cat(sprintf("  No coordinates:     %d FilterIDs\n",
-            length(intersect(drop_no_coords,       all_fids))))
-cat(sprintf("  NA covariates:      %d FilterIDs\n",
-            length(intersect(drop_na_covars,        all_fids))))
-cat(sprintf("  Impossible dist_km: %d FilterIDs\n",
-            length(intersect(drop_impossible_dist,  all_fids))))
-cat(sprintf("  Total static:       %d FilterIDs\n", n_dropped))
-
-keep_samples <- rownames(md)[is.na(md$FilterID) | !(md$FilterID %in% drop_all)]
+keep_samples <- rownames(md)[is.na(md$FilterID) | !(md$FilterID %in% drop_impossible_speed)]
 ps <- prune_samples(keep_samples, ps)
 md <- data.frame(sample_data(ps), check.names = FALSE)
 
@@ -128,8 +118,12 @@ md <- data.frame(sample_data(ps), check.names = FALSE)
 # =============================================================================
 # Drop any remaining samples with NA in required covariates not caught above.
 
+# datetime_end / filtration_time_min are required by the models (temporal-overlap
+# site structure and the filtration-time covariate); F062 has no filtration end
+# time ("na") and previously dropped out via its missing end coordinates instead.
 required_covars <- c("Volume.filtered..mL.", "dist_km",
-                     "Latitude.start", "Longitude.start")
+                     "Latitude.start", "Longitude.start",
+                     "datetime_end", "filtration_time_min")
 na_mask <- apply(md[, required_covars], 1, anyNA)
 if (any(na_mask)) {
   na_fids <- unique(na.omit(md$FilterID[na_mask]))
@@ -155,6 +149,13 @@ cat(sprintf("  Unique FilterIDs:         %d\n", retained_fids))
 cat(sprintf("  Taxa:                     %d\n", ntaxa(ps)))
 cat(sprintf("\nMethod breakdown:\n"))
 print(table(md$Collection.method, useNA = "ifany"))
+
+legacy_now_retained <- intersect(legacy_static_drops, unique(na.omit(md$FilterID)))
+cat(sprintf("\nOriginal-submission static drops now retained (%d of %d): %s\n",
+            length(legacy_now_retained), length(legacy_static_drops),
+            paste(legacy_now_retained, collapse = ", ")))
+cat(sprintf("Original-submission static drops still excluded: %s\n",
+            paste(setdiff(legacy_static_drops, legacy_now_retained), collapse = ", ")))
 
 out_path <- "outputs/MOSAIC_taxnamed_metadata_filtered.ps.RDS"
 saveRDS(ps, out_path)

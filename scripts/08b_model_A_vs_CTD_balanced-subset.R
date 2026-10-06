@@ -1,6 +1,6 @@
 # =============================================================================
 # MOSAIC Marine Mammals — v6 MATCHED SENSITIVITY (Q1): A-vs-D balance check.
-#   Uses every MOSAIC-A (86) and every CTD/MOSAIC-D (26) from both cruises, with a
+#   Uses every MOSAIC-A (101) and every CTD/MOSAIC-D (36) from both cruises, with a
 #   fixed Fall-vs-Summer cruise term, and relies on the hierarchical model (site RE +
 #   inshore/offshore) to absorb the uneven A-vs-D sampling effort. NO data excluded
 #   (Summer CTD hotspot F101/F102 included -> conservative). Machinery otherwise
@@ -82,7 +82,7 @@ cat("Sample metadata: ", nrow(md),  "rows x", ncol(md),  "cols\n")
 cat("Taxa table:      ", nrow(tax), "rows x", ncol(tax), "cols\n")
 cat("OTU table:       ", nrow(otu), "rows x", ncol(otu), "cols (taxa x samples)\n\n")
 
-# v6 MATCHED SENSITIVITY: the 52-filter balance check (26 CTD + 26 zone-matched A),
+# v6 MATCHED SENSITIVITY: the 72-filter balance check (36 CTD + 36 zone-matched A),
 # from 08.4_build_matched_pairs_v6.R. Same model as the v6 primary; tests whether
 # cutting A to a cruise x inshore/offshore-balanced 26 moves d_method.
 mp_v6 <- read.csv("outputs/v6/matched_pairs_v6.csv", stringsAsFactors = FALSE)

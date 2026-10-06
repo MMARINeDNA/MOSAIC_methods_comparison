@@ -4,9 +4,9 @@
 # Pairs each CTD (MOSAIC-D) cast to its nearest MOSAIC-A start, 1:1 with NO reuse,
 # WITHIN the same cruise x inshore/offshore stratum (decisions 1 & 2). Optimal
 # (min total distance) assignment via clue::solve_LSAP where available, else a
-# deterministic greedy nearest fallback. Uses ALL 26 CTDs; no data excluded.
+# deterministic greedy nearest fallback. Uses ALL retained CTDs; no data excluded.
 # Input : outputs/MOSAIC_taxnamed_sample_data_metadata_filtered.csv
-# Output: outputs/v6/matched_pairs_v6.csv   (26 CTD-A pairs + distances)
+# Output: outputs/v6/matched_pairs_v6.csv   (one CTD-A pair per retained CTD + distances)
 # =============================================================================
 dir.create("outputs/v6", recursive = TRUE, showWarnings = FALSE)
 md <- read.csv("outputs/MOSAIC_taxnamed_sample_data_metadata_filtered.csv",
@@ -51,7 +51,7 @@ mp <- do.call(rbind, pairs)
 mp <- mp[order(mp$cruise, mp$zone, mp$dist_km), ]
 write.csv(mp, "outputs/v6/matched_pairs_v6.csv", row.names = FALSE)
 
-cat(sprintf("Matched %d CTD-A pairs (all 26 CTDs used, no A reused: %s)\n",
+cat(sprintf("Matched %d CTD-A pairs (all retained CTDs used, no A reused: %s)\n",
             nrow(mp), !any(duplicated(mp$A))))
 cat("Pairs per stratum:\n"); print(table(mp$cruise, mp$zone))
 cat(sprintf("Match distance (km): min %.2f  median %.2f  max %.2f\n",

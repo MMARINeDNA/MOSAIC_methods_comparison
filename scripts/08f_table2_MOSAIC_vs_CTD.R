@@ -14,19 +14,19 @@ dir.create("model_evolution_tracking", recursive = TRUE, showWarnings = FALSE)
 models <- list(
   list(label="Primary", coef="d_method",
        file="outputs/v6/MOSAIC_mammal_families_twolevel_stage1_AvsD_v6_results.RData",
-       samples="86 A, 26 CTD (112)",
+       samples="101 A, 36 CTD (137)",
        contrast="MOSAIC-A vs CTD — all data"),
   list(label="Balanced subset", coef="d_method",
        file="outputs/v6/MOSAIC_mammal_families_twolevel_stage1_AvsD_v6_matched_results.RData",
-       samples="26 A, 26 CTD (52)",
+       samples="36 A, 36 CTD (72)",
        contrast="MOSAIC-A vs CTD — cruise × inshore/offshore-balanced 1:1 subset"),
   list(label="Full Dataset", coef="d_method",
        file="outputs/v6/MOSAIC_mammal_families_twolevel_stage1_allMOSAIC_v6_results.RData",
-       samples="86 A, 20 B, 6 C, 26 CTD (138)",
+       samples="101 A, 20 B, 6 C, 36 CTD (163)",
        contrast="MOSAIC-A/B/C vs CTD — all surface methods pooled"),
   list(label="Fall 2023 pilot", coef="d_method",
        file="outputs/v5/MOSAIC_mammal_families_twolevel_stage1_AvsD_results.RData",
-       samples="29 A, 20 CTD (49)",
+       samples="41 A, 29 CTD (70)",
        contrast="MOSAIC-A vs CTD — Fall 2023 pilot (Summer CTDs excluded)")
 )
 
