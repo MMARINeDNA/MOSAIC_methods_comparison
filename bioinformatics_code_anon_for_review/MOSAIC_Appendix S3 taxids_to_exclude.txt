@@ -31,7 +31,6 @@
 9735	#Bridled dolphin
 103589	#Clymene dolphin
 103590	#Atlantic spotted dolphin A
-9736	#Spinner dolphin
 29074	#Atlantic spotted dolphin B
 2688959	#Unclassified Stenella
 79784	#Indo-pacific bottlenose dolphin
