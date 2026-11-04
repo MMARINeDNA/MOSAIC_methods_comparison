@@ -1,7 +1,7 @@
 ---
 # MIOP terms
 methodology_category: Omics Analysis
-project: MiFish PCR Optimization
+project: MarVer1 PCR on CalCOFI MOSAIC Samples
 purpose: PCR [OBI:0000415]
 analyses: PCR [OBI:0000415]
 geographic_location: [GAZ:00007899]
@@ -9,7 +9,7 @@ broad_scale_environmental_context: marine biome [ENVO:00000447], marine photic z
 local_environmental_context: marine pelagic zone [ENVO:00000208], marine pelagic biome [ENVO:01000023], marine biome [ENVO:00000447]
 environmental_medium: sea water [ENVO:00002149], polymerase chain reaction [OBI:0000415]
 target: 12S [NCIT:C128263]
-creator: anonymized for review # names separated by commas
+creator: Nastassia Patin, Eldridge Wisely, Ella Crotty # names separated by commas
 materials_required: PCR instrument [OBI:0000989], agarose gel electrophoresis system [OBI:0001134]
 skills_required: sterile technique, pipetting skills, standard molecular technique
 time_required: 180 # minutes (integer)
@@ -83,9 +83,9 @@ pcr_method_additional: not provided
 
 | PREPARED BY | AFFILIATION | ORCID | DATE |
 | ------------ | ------------ | ------------ | ---------- |
-| Content Cell | Content Cell | Content Cell | yyyy-mm-dd |
-| Content Cell | Content Cell | Content Cell | yyyy-mm-dd |
-
+| Nastassia Patin | Scripps Institution of Oceanography, University of California San Diego | 0000-0001-8522-7682 | 2026-06-22 |
+| Eldridge Wisely | Scripps Institution of Oceanography, University of California San Diego | 0009-0001-2784-4778 | 2026-06-22 |
+| Ella Crotty | Scripps Institution of Oceanography, University of California San Diego | 0009-0004-4340-2007 | 2026-06-22 |
 ### Related Protocols
 
 | PROTOCOL NAME | LINK         | VERSION      | RELEASE DATE | INTERNAL/EXTERNAL |
@@ -112,15 +112,15 @@ pcr_method_additional: not provided
 
 ## BACKGROUND
 
-This protocol describes steps for performing PCR for the 12S MiFish marker gene regions using eDNA extracted from seawater.
+This protocol describes steps for performing PCR for the 12S MarVer1 marker gene region using eDNA extracted from seawater.
 
 ### Summary
 
-The purpose of this protocol is to conduct PCR to optimize teleost fish detection using the MiFish primer set.
+The purpose of this protocol is to conduct PCR to optimize marine vertebrate detection using the MarVer1 primer set.
 
 ### Method Description and Rationale
 
-This protocol is used for PCR amplifying the 12S MiFish marker gene regions of environmental DNA. It is highly reproducible and can easily be adapted for any number of samples (i.e. a full 96-well plate or a few samples).
+This protocol is used for PCR amplifying the 12S MarVer1 marker gene regions of environmental DNA. It is highly reproducible and can easily be adapted for any number of samples (i.e. a full 96-well plate or a few samples).
 
 ### Spatial Coverage and Environment(s) of Relevance
 
