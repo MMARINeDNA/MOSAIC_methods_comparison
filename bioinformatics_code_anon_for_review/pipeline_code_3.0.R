@@ -1,5 +1,5 @@
 ##############################################################################
-##                       #Anonymized for Review#
+##                            #Kelly Lab#
 ##              Metabarcoding Taxonomic Assignment Pipeline                 ##
 ## This pipeline will take you from de-multiplexed fastq files to a matrix  ##
 ## with taxon names and counts. It should work for linux or mac. PC users,  ##
