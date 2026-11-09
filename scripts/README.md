@@ -15,8 +15,7 @@ Rscript scripts/run_all.R --only=08a,08c  # just these scripts (prefix match)
 
 | Input | Used by |
 |---|---|
-| `processed_data/bioinformatic_outputs/` (three taxon tables, `taxonomy_lookup_NCBI.csv` and `geodata_corrected_MOSAIC_metadata.csv`) | `01`, `02` |
-| `data/SR2311_SR2408_eDNA_metadata.csv` | `01` |
+| `processed_data/bioinformatic_outputs/` (three taxon tables, `taxonomy_lookup_NCBI.csv`, `SR2311_SR2408_eDNA_metadata.csv` and `geodata_corrected_MOSAIC_metadata.csv`) | `01`, `02` |
 | `visual_data/` (CalCOFI sightings and segments workbooks, species codes, `visuals_for_MOSAIC.csv`) | `03` |
 | `visual_data/visuals_coalesced.csv` | `03`: the **one manual input**, the visual sightings coalesced by hand into events. It is read, not generated. |
 

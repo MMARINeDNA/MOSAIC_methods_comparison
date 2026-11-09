@@ -6,7 +6,7 @@ library(tidyverse)
 `%ni%` = Negate(`%in%`)
 
 #load data
-metadata<-read.csv("data/SR2311_SR2408_eDNA_metadata.csv")
+metadata<-read.csv("processed_data/bioinformatic_outputs/SR2311_SR2408_eDNA_metadata.csv")
 GGBC1<-read.csv("processed_data/bioinformatic_outputs/taxon_table_lineage_wide.csv")
 GGBC2Fs<-read.csv("processed_data/bioinformatic_outputs/taxon_table_wide-SR2408-GGBC2.csv")
 GGBC2all<-read.csv(file = "processed_data/bioinformatic_outputs/taxon_table_wide - taxon_table_wide.csv")

@@ -6,6 +6,10 @@ Analysis code: https://github.com/MMARINeDNA/MOSAIC_methods_comparison
 
 License: CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Please cite the paper and this repository; see `CITATION.cff`.
 
+## Raw sequence data
+
+The raw sequencing reads (FASTQ) are archived in NCBI SRA under BioProject PRJNA1556353.
+
 ## Sampling methods
 
 All filters are 5 um mixed cellulose ester. The method is recorded in `Collection method` / `Collection.method`.
@@ -49,6 +53,7 @@ Taxon tables as produced by the bioinformatic pipeline, before human and human-a
 | `taxon_table_wide - taxon_table_wide.csv` | 339 taxa x 331 samples. Columns: `BestTaxon`, `Class`, then one column per sample. |
 | `taxon_table_wide-SR2408-GGBC2.csv` | 354 taxa x 188 samples. Columns: `BestTaxon`, `Class`, then one column per sample. |
 | `geodata_corrected_MOSAIC_metadata.csv` | Corrected sample metadata, 508 rows x 37 fields (plus the `SampleName` column), covering the samples in the study including some not analysed in the paper. Filtration positions and times were checked and corrected against the research vessel's GPS track and the CalCOFI station positions. |
+| `SR2311_SR2408_eDNA_metadata.csv` | Sample metadata (field, filtration and extraction records) for the filters and libraries of cruises RS2311 and SR2408, as recorded before the position corrections. Read by `scripts/01`. |
 | `taxonomy_lookup_NCBI.csv` | Taxonomy (phylum to species) for each of the 415 OTUs in the taxon tables, as looked up from NCBI for the paper. Row names are the OTU ids. `scripts/01` reads it so that the analysis does not depend on the current NCBI taxonomy. |
 
 ## Taxonomic assignment

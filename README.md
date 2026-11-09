@@ -5,8 +5,7 @@ protocols and data scripts associated with MOSAIC eDNA sampling methods comparis
 
 | Folder | Contents |
 |---|---|
-| `processed_data/` | Processed eDNA data and corrected sample metadata (the starting point; see its README) |
-| `data/` | Sample metadata (`SR2311_SR2408_eDNA_metadata.csv`) |
+| `processed_data/` | Processed eDNA data, sample metadata and corrected positions (the starting point; see its README). Raw reads are in NCBI SRA, BioProject PRJNA1556353 |
 | `visual_data/` | CalCOFI visual survey data used for the visual-vs-eDNA comparison |
 | `scripts/` | Numbered analysis scripts and `run_all.R` (see `scripts/README.md` for run order, outputs and R packages) |
 | `ship_tracks/`, `protocols/`, `supplement/` | Ship GPS tracks, laboratory protocols, supplementary files |
@@ -17,7 +16,7 @@ From the repository root, `Rscript scripts/run_all.R` re-creates every table and
 
 ## License
 
-Code: MIT (`LICENSE`). Data in `processed_data/`, `data/` and `visual_data/`: CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), which requires attribution.
+Code: MIT (`LICENSE`). Data in `processed_data/` and `visual_data/`: CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), which requires attribution.
 
 ## How to cite
 
