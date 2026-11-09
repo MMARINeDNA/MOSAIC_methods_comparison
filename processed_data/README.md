@@ -4,7 +4,7 @@ Processed eDNA metabarcoding data and corrected sample metadata used in the anal
 
 Analysis code: https://github.com/MMARINeDNA/MOSAIC_methods_comparison
 
-License: CC0 1.0.
+License: CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Please cite the paper and this repository; see `CITATION.cff`.
 
 ## Sampling methods
 
@@ -19,7 +19,7 @@ All filters are 5 um mixed cellulose ester. The method is recorded in `Collectio
 
 ## Folder contents
 
-The data are in two folders of this repository (archived with it on Zenodo, DOI 10.5281/zenodo.23942563), described below. `bioinformatic_outputs/` is the input to `scripts/01`-`04`, which rebuild `processed_phyloseq/` (written to `outputs/`); `processed_phyloseq/` is the reference copy used for the paper. See `scripts/README.md`.
+The data are in two folders of this repository (archived with it on Zenodo, DOI 10.5281/zenodo.23942562), described below. `bioinformatic_outputs/` is the input to `scripts/01`-`04`, which rebuild `processed_phyloseq/` (written to `outputs/`); `processed_phyloseq/` is the reference copy used for the paper. See `scripts/README.md`.
 
 ### `processed_phyloseq/`: the data analysed in the paper
 

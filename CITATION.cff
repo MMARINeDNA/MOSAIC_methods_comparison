@@ -1,0 +1,85 @@
+cff-version: 1.2.0
+message: "If you use this code or data, please cite the paper (preferred citation) and this repository."
+title: "MOSAIC_eDNA_methods_comparison"
+type: software
+authors:
+  - family-names: Wisely
+    given-names: Eldridge
+    orcid: "https://orcid.org/0009-0001-2784-4778"
+    affiliation: "Scripps Institution of Oceanography, UC San Diego"
+    email: ewisely@ucsd.edu
+  - family-names: Patin
+    given-names: Nastassia
+    orcid: "https://orcid.org/0000-0001-8522-7682"
+    affiliation: "Scripps Institution of Oceanography, UC San Diego"
+  - family-names: Alksne
+    given-names: Michaela N.
+    orcid: "https://orcid.org/0009-0002-2284-1639"
+    affiliation: "Scripps Institution of Oceanography, UC San Diego"
+  - family-names: Dinasquet
+    given-names: Julie
+    orcid: "https://orcid.org/0000-0002-3401-764X"
+    affiliation: "Scripps Institution of Oceanography, UC San Diego"
+  - family-names: Swalethorp
+    given-names: Rasmus
+    orcid: "https://orcid.org/0000-0003-0065-4381"
+    affiliation: "Scripps Institution of Oceanography, UC San Diego"
+  - family-names: Bowlin
+    given-names: Noelle
+    orcid: "https://orcid.org/0000-0002-9202-598X"
+    affiliation: "Southwest Fisheries Science Center, NOAA Fisheries"
+  - family-names: McKaughan
+    given-names: Gaelila
+    affiliation: "Scripps Institution of Oceanography, UC San Diego"
+  - family-names: Coden
+    given-names: Flora
+    affiliation: "Scripps Institution of Oceanography, UC San Diego"
+  - family-names: Satterthwaite
+    given-names: Erin V.
+    orcid: "https://orcid.org/0000-0003-0177-7770"
+    affiliation: "Scripps Institution of Oceanography, UC San Diego"
+  - family-names: Baumann-Pickering
+    given-names: Simone
+    orcid: "https://orcid.org/0000-0002-3428-3577"
+    affiliation: "Scripps Institution of Oceanography, UC San Diego"
+  - family-names: Semmens
+    given-names: Brice X.
+    orcid: "https://orcid.org/0000-0001-5663-9194"
+    affiliation: "Scripps Institution of Oceanography, UC San Diego"
+repository-code: "https://github.com/MMARINeDNA/MOSAIC_methods_comparison"
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.23942562
+    description: "Zenodo concept DOI (all versions)"
+license:
+  - MIT
+  - CC-BY-4.0
+preferred-citation:
+  type: article
+  title: "Continuous Large-Volume Active Transect Sampling Improves Detection of Rare Marine Vertebrate eDNA Across Large Spatial Scales"
+  journal: "Methods in Ecology and Evolution"
+  year: 2026
+  status: in-press
+  authors:
+    - family-names: Wisely
+      given-names: Eldridge
+    - family-names: Patin
+      given-names: Nastassia
+    - family-names: Alksne
+      given-names: Michaela N.
+    - family-names: Dinasquet
+      given-names: Julie
+    - family-names: Swalethorp
+      given-names: Rasmus
+    - family-names: Bowlin
+      given-names: Noelle
+    - family-names: McKaughan
+      given-names: Gaelila
+    - family-names: Coden
+      given-names: Flora
+    - family-names: Satterthwaite
+      given-names: Erin V.
+    - family-names: Baumann-Pickering
+      given-names: Simone
+    - family-names: Semmens
+      given-names: Brice X.
