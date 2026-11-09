@@ -12,6 +12,5 @@ protocols and data scripts associated with MOSAIC eDNA sampling methods comparis
 | `ship_tracks/`, `protocols/`, `supplement/` | Ship GPS tracks, laboratory protocols, supplementary files |
 | `viz/` | Figures from the paper (the scripts also write regenerated figures here) |
 | `bioinformatics_code/` | Sequence-processing pipeline code (reads to taxon tables) |
-| `archive/` | Superseded and diagnostic scripts, including the metadata position-correction script; not needed to reproduce the paper |
 
 From the repository root, `Rscript scripts/run_all.R` re-creates every table and figure except Figs 1 and 2 (station map and apparatus photograph, no script). Results go to `outputs/`, `viz/` and `logs/` (`outputs/` and `logs/` are git-ignored).

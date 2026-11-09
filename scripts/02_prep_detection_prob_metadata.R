@@ -1,4 +1,4 @@
-#This script takes an initial phyloseq object and the corrected sample table (processed_data/bioinformatic_outputs/geodata_corrected_MOSAIC_metadata.csv; made from the ship GPS tracks by archive/scripts/1.5_metadata_geocorrections.R), calculates important metadata like total time filtered, and then outputs csvs per PCR replicate, and per sample in two versions: with ASV counts per taxon, and as just detection 1/0.  
+#This script takes an initial phyloseq object and the corrected sample table (processed_data/bioinformatic_outputs/geodata_corrected_MOSAIC_metadata.csv; made from the ship GPS tracks in ship_tracks/; the correction script is not in this repository), calculates important metadata like total time filtered, and then outputs csvs per PCR replicate, and per sample in two versions: with ASV counts per taxon, and as just detection 1/0.  
 
 library(geosphere)
 library(geodist)
@@ -20,7 +20,7 @@ MOSAIC.ps<-readRDS("outputs/MOSAIC.ps.RDS")
 contams<-c("Homo","Bos","Sus","Gallus","Canis","Felis","Meleagris","Mus")
 blanks<-subset_samples(MOSAIC.ps,is.na(Collection.device))
 blanks <- prune_taxa(taxa_sums(blanks) > 0, blanks)
-# Corrected sample table (made by archive/scripts/1.5_metadata_geocorrections.R, not needed to replicate the analyses): corrected locations, dist_km, Inshore.Offshore; it also holds the controls
+# Corrected sample table (made once from the ship GPS tracks; the correction script is not in this repository and is not needed to replicate the analyses): corrected locations, dist_km, Inshore.Offshore; it also holds the controls
 # (field blanks), whose collection method was removed when it was made. Blanks take their metadata from it.
 MOSAIC_sample_data1<-read.csv("processed_data/bioinformatic_outputs/geodata_corrected_MOSAIC_metadata.csv")
 MOSAIC_sample_data<-column_to_rownames(MOSAIC_sample_data1,var = "SampleName")

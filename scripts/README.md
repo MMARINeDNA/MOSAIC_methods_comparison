@@ -20,7 +20,7 @@ Rscript scripts/run_all.R --only=08a,08c  # just these scripts (prefix match)
 | `visual_data/` (CalCOFI sightings and segments workbooks, species codes, `visuals_for_MOSAIC.csv`) | `03` |
 | `visual_data/visuals_coalesced.csv` | `03`: the **one manual input**, the visual sightings coalesced by hand into events. It is read, not generated. |
 
-`processed_data/processed_phyloseq/` is the reference copy of what `01`–`04` produce (see `processed_data/README.md`). Correcting the sample positions against the ship tracks is not part of this pipeline; it was done once, by `archive/scripts/1.5_metadata_geocorrections.R`, and its result is `geodata_corrected_MOSAIC_metadata.csv`.
+`processed_data/processed_phyloseq/` is the reference copy of what `01`–`04` produce (see `processed_data/README.md`). Correcting the sample positions against the ship tracks is not part of this pipeline; it was done once, outside the scripts in this repository (the ship tracks are in `ship_tracks/`), and its result is `geodata_corrected_MOSAIC_metadata.csv`.
 
 Taxonomy in `01` is pinned to the lookup used for the paper (`processed_data/bioinformatic_outputs/taxonomy_lookup_NCBI.csv`); the live NCBI lookup is kept in `01` as commented-out code. NCBI taxonomy changes may result in changes to the downstream analyses (see "Known differences"). `03` still looks up the visual-survey species codes with `taxonomizr`, which needs the NCBI `accessionTaxa.sql` database (large; downloaded to the working directory on first use). To reuse a copy: `export ACCESSION_TAXA_SQL=/path/to/accessionTaxa.sql`.
 
