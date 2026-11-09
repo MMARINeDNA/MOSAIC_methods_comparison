@@ -21,7 +21,7 @@ Rscript scripts/run_all.R --only=08a,08c  # just these scripts (prefix match)
 
 `processed_data/processed_phyloseq/` is the reference copy of what `01`–`04` produce (see `processed_data/README.md`). Correcting the sample positions against the ship tracks is not part of this pipeline; it was done once, outside the scripts in this repository (the ship tracks are in `ship_tracks/`), and its result is `geodata_corrected_MOSAIC_metadata.csv`.
 
-Taxonomy in `01` is pinned to the lookup used for the paper (`processed_data/bioinformatic_outputs/taxonomy_lookup_NCBI.csv`); the live NCBI lookup is kept in `01` as commented-out code. `03` still looks up the visual-survey species codes with `taxonomizr`, which needs the NCBI `accessionTaxa.sql` database (large; downloaded to the working directory on first use). To reuse a copy: `export ACCESSION_TAXA_SQL=/path/to/accessionTaxa.sql`.
+Taxonomy in `01` is pinned to the lookup used for the paper (`processed_data/bioinformatic_outputs/taxonomy_lookup_NCBI.csv`); the live NCBI lookup is kept in `01` as commented-out code. NCBI taxonomy changes may result in changes to the downstream analyses. `03` still looks up the visual-survey species codes with `taxonomizr`, which needs the NCBI `accessionTaxa.sql` database (large; downloaded to the working directory on first use). To reuse a copy: `export ACCESSION_TAXA_SQL=/path/to/accessionTaxa.sql`.
 
 ## Run order
 
@@ -61,3 +61,8 @@ Measured on a 10-core Apple-silicon Mac (R 4.6.1, NIMBLE 1.4.3), in a clean copy
 CRAN: `tidyverse` (dplyr, tidyr, purrr, tibble, ggplot2, readr, stringr, lubridate), `readxl`, `geosphere`, `geodist`, `vegan`, `maps`, `ggrepel`, `scales`, `cowplot`, `patchwork`, `nimble` (needs a C++ compiler), `coda`, `bayesplot`, `flextable`, `officer`, `kableExtra`, `taxonomizr`, `clue` (optional; `08b_build` falls back to a greedy match without it).
 Bioconductor / GitHub: `phyloseq`, `microViz`, `metagMisc`, `speedyseq`.
 No Venn package is needed. Saving Table 1 as `.html` needs a recent pandoc; if it is too old the script warns and still writes the `.docx`.
+
+## Known differences from the published results
+
+* NCBI taxonomy changes may result in changes to the downstream analyses. Using `taxonomy_lookup_NCBI.csv`, scripts `01`–`04` regenerate `processed_data/processed_phyloseq/` exactly. To re-run the live lookup, uncomment it in `01`.
+* Posterior summaries vary slightly with MCMC run and library versions (changing the seed of the balanced-subset model moved its odds ratio by 0.03 in our test).
