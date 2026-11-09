@@ -62,7 +62,7 @@ CRAN: `tidyverse` (dplyr, tidyr, purrr, tibble, ggplot2, readr, stringr, lubrida
 Bioconductor / GitHub: `phyloseq`, `microViz`, `metagMisc`, `speedyseq`.
 No Venn package is needed. Saving Table 1 as `.html` needs a recent pandoc; if it is too old the script warns and still writes the `.docx`.
 
-## Known differences from the published results
+## Reproducibility notes
 
 * NCBI taxonomy changes may result in changes to the downstream analyses. Using `taxonomy_lookup_NCBI.csv`, scripts `01`–`04` regenerate `processed_data/processed_phyloseq/` exactly. To re-run the live lookup, uncomment it in `01`.
 * Posterior summaries vary slightly with MCMC run and library versions (changing the seed of the balanced-subset model moved its odds ratio by 0.03 in our test).
