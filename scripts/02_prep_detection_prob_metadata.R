@@ -1,4 +1,4 @@
-#This script takes an initial phyloseq object and the corrected sample table (1.5_metadata_geocorrections.R), calculates important metadata like total time filtered, and then outputs csvs per PCR replicate, and per sample in two versions: with ASV counts per taxon, and as just detection 1/0.  
+#This script takes an initial phyloseq object and the corrected sample table (processed_data/bioinformatic_outputs/geodata_corrected_MOSAIC_metadata.csv; made from the ship GPS tracks by archive/scripts/1.5_metadata_geocorrections.R), calculates important metadata like total time filtered, and then outputs csvs per PCR replicate, and per sample in two versions: with ASV counts per taxon, and as just detection 1/0.  
 
 library(geosphere)
 library(geodist)
@@ -20,10 +20,10 @@ MOSAIC.ps<-readRDS("outputs/MOSAIC.ps.RDS")
 contams<-c("Homo","Bos","Sus","Gallus","Canis","Felis","Meleagris","Mus")
 blanks<-subset_samples(MOSAIC.ps,is.na(Collection.device))
 blanks <- prune_taxa(taxa_sums(blanks) > 0, blanks)
-# Sample table from 1.5_metadata_geocorrections.R: corrected locations, dist_km, Inshore.Offshore; it also holds the controls
-# (field blanks), whose collection method 1.5 has removed. Blanks take their metadata from it.
-MOSAIC_sample_data1<-read.csv("outputs/geodata_corrected_MOSAIC_metadata.csv")
-MOSAIC_sample_data<-column_to_rownames(MOSAIC_sample_data1,var = "X")
+# Corrected sample table (made by archive/scripts/1.5_metadata_geocorrections.R, not needed to replicate the analyses): corrected locations, dist_km, Inshore.Offshore; it also holds the controls
+# (field blanks), whose collection method was removed when it was made. Blanks take their metadata from it.
+MOSAIC_sample_data1<-read.csv("processed_data/bioinformatic_outputs/geodata_corrected_MOSAIC_metadata.csv")
+MOSAIC_sample_data<-column_to_rownames(MOSAIC_sample_data1,var = "SampleName")
 stopifnot(all(sample_names(blanks) %in% rownames(MOSAIC_sample_data)))
 blanks_md <- data.frame(sample_data(blanks), check.names = FALSE)
 blanks_md$Collection.method <- MOSAIC_sample_data[rownames(blanks_md), "Collection.method"]

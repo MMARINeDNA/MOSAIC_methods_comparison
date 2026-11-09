@@ -7,9 +7,9 @@ library(tidyverse)
 
 #load data
 metadata<-read.csv("data/SR2311_SR2408_eDNA_metadata.csv")
-GGBC1<-read.csv("data/taxon_table_lineage_wide.csv")
-GGBC2Fs<-read.csv("data/taxon_table_wide-SR2408-GGBC2.csv")
-GGBC2all<-read.csv(file = "data/taxon_table_wide - taxon_table_wide.csv")
+GGBC1<-read.csv("processed_data/bioinformatic_outputs/taxon_table_lineage_wide.csv")
+GGBC2Fs<-read.csv("processed_data/bioinformatic_outputs/taxon_table_wide-SR2408-GGBC2.csv")
+GGBC2all<-read.csv(file = "processed_data/bioinformatic_outputs/taxon_table_wide - taxon_table_wide.csv")
 
 #associate metadata with GGBC1
 #GGBC1 has dots and GGBC2 has underlines separating the sampleID and the rep number
@@ -145,25 +145,34 @@ MOSAIC.ps<-tax_glom(MOSAICpapermerge.ps,taxrank = "BestTaxon")
 MOSAIC.ps
 
 #fill in missing taxonomy information
-
-library(taxonomizr)
-
-prepareDatabase('accessionTaxa.sql')
-
-combined_taxtab<-as.data.frame(tax_table(MOSAIC.ps))
-besttaxa<-combined_taxtab$BestTaxon
-
-taxaId<-getId(besttaxa,'accessionTaxa.sql')
-print(taxaId)
-taxa<-getTaxonomy(taxaId,'accessionTaxa.sql')
-print(taxa)
-
-OTU_names<-rownames(combined_taxtab)
-rownames(taxa)<-OTU_names
-taxa<-as.data.frame(taxa)%>%
-  dplyr::select(-superkingdom)
-taxa<-as.matrix(taxa)
+# Taxonomy is pinned to the lookup used for the paper (processed_data/bioinformatic_outputs/taxonomy_lookup_NCBI.csv,
+# the tax_table of MOSAIC.ps from that run; rows = OTU ids, columns = phylum..species).
+# NCBI taxonomy changes may result in changes to the downstream analyses (e.g. family labels of Isurus and
+# Carcharodon changed from Alopiidae to Lamnidae). The live lookup is commented out below.
+taxa<-as.matrix(read.csv("processed_data/bioinformatic_outputs/taxonomy_lookup_NCBI.csv",row.names = 1))
+stopifnot(setequal(rownames(taxa), rownames(tax_table(MOSAIC.ps))))
+taxa<-taxa[rownames(tax_table(MOSAIC.ps)),]
 tax_table(MOSAIC.ps)<-taxa
+
+# library(taxonomizr)
+#
+# taxdb <- Sys.getenv("ACCESSION_TAXA_SQL", "accessionTaxa.sql")  # set to reuse an existing NCBI taxonomy database
+# if (!file.exists(taxdb)) prepareDatabase(taxdb, getAccessions = FALSE)
+#
+# combined_taxtab<-as.data.frame(tax_table(MOSAIC.ps))
+# besttaxa<-combined_taxtab$BestTaxon
+#
+# taxaId<-getId(besttaxa,taxdb)
+# print(taxaId)
+# taxa<-getTaxonomy(taxaId,taxdb)
+# print(taxa)
+#
+# OTU_names<-rownames(combined_taxtab)
+# rownames(taxa)<-OTU_names
+# taxa<-as.data.frame(taxa)%>%
+#   dplyr::select(-dplyr::any_of(c("superkingdom","domain")))  # taxonomizr >= 0.11 names it "domain"
+# taxa<-as.matrix(taxa)
+# tax_table(MOSAIC.ps)<-taxa
 
 
 

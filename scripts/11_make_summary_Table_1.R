@@ -294,7 +294,8 @@ mosaic_kable <- mosaic_tbl %>%
 # ── Save ──────────────────────────────────────────────────────
 save_as_docx(mosaic_flextable,
              path = "outputs/summary_table1.docx")
-save_as_html(mosaic_flextable,
-             path = "outputs/summary_table1.html")
+# HTML export needs a recent pandoc (fails with the old pandoc 2.2.3.2); the .docx above is the Table 1 file
+tryCatch(save_as_html(mosaic_flextable, path = "outputs/summary_table1.html"),
+         error = function(e) warning("summary_table1.html not written: ", conditionMessage(e)))
 writeLines(as.character(mosaic_kable),
            "outputs/summary_table1_kable.html")

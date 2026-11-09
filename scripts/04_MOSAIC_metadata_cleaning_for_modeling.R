@@ -15,7 +15,7 @@
 #   3. Drop any samples with NA in the required covariates
 #
 # Revision round 2: start/end locations (and therefore dist_km) now come from
-# the corrected-locations workbook (applied in 02_prep_detection_prob_metadata.R).
+# the corrected sample table in processed_data/ (applied in 02_prep_detection_prob_metadata.R).
 # The hard-coded drop lists used in the original submission (10 "no GPS" FilterIDs,
 # 4 "NA covariate" FilterIDs, 12 "impossible dist_km" FilterIDs; this header said 32 dropped /
 # 133 retained, but the committed output had 138) existed only because of the uncorrected locations, so exclusions

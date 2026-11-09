@@ -4,6 +4,10 @@ library(readxl)
 library(taxonomizr)
 `%ni%` = Negate(`%in%`)
 
+# NCBI taxonomy database (large download on first use); set ACCESSION_TAXA_SQL to reuse an existing one
+taxdb <- Sys.getenv("ACCESSION_TAXA_SQL", "accessionTaxa.sql")
+if (!file.exists(taxdb)) prepareDatabase(taxdb, getAccessions = FALSE)
+
 #read in data
 
 sightings<-read_xlsx("visual_data/CalCOFI_sightings_CC2023-11_CC2024-08.xlsx")
@@ -27,20 +31,22 @@ sightings<-sightings%>%
 combo1<-left_join(sightings, segments)
 visuals<-left_join(combo1,sciname_codes)
 
-#assign taxonomy
-prepareDatabase(getAccessions = FALSE)
-scinames<-visuals$`Scientific name`
-taxaId<-getId(scinames,'accessionTaxa.sql')
-print(taxaId)
-taxa<-getTaxonomy(taxaId,'accessionTaxa.sql')
-print(taxa)
+#assign taxonomy (skipped when visual_data/visuals_for_MOSAIC.csv exists: it is not read again in this script,
+#and the lookup downloads the NCBI taxonomy)
+if (!file.exists("visual_data/visuals_for_MOSAIC.csv")) {
+  scinames<-visuals$`Scientific name`
+  taxaId<-getId(scinames,taxdb)
+  print(taxaId)
+  taxa<-getTaxonomy(taxaId,taxdb)
+  print(taxa)
 
-taxa.df<-as.data.frame(taxa)
+  taxa.df<-as.data.frame(taxa)
 
-visuals1<-cbind(visuals,taxa.df)
-row.names(visuals1)<-visuals$UniqueID
+  visuals1<-cbind(visuals,taxa.df)
+  row.names(visuals1)<-visuals$UniqueID
 
-write.csv(visuals1, "visual_data/visuals_for_MOSAIC.csv")
+  write.csv(visuals1, "visual_data/visuals_for_MOSAIC.csv")
+}
 
 #in excel included taxonomic levels to family for "unidentified dolphin" =delphinidae, and "unidentified large whale" =balaenopteridae.
 
@@ -68,9 +74,9 @@ visuals_tax<-column_to_rownames(visuals_tax, var = "Species1")
 visuals_tax<-visuals_tax[-1]
 tax2ID<-visuals_tax$`Scientific name`
 
-taxaIds1<-getId(tax2ID,'accessionTaxa.sql')
+taxaIds1<-getId(tax2ID,taxdb)
 print(taxaIds1)
-taxa1<-getTaxonomy(taxaIds1,'accessionTaxa.sql')
+taxa1<-getTaxonomy(taxaIds1,taxdb)
 print(taxa1)
 
 vis_tax<-visuals[22:31]

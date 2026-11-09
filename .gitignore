@@ -1,3 +1,8 @@
 outputs/*.RData
-viz/*.pdf
 .Rproj.user
+outputs/
+logs/
+model_evolution_tracking/
+~$*
+.DS_Store
+.claude/
